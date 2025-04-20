@@ -23,6 +23,7 @@ const RecenterButton: React.FC<RecenterButtonProps> = ({ onClick, className }) =
         "flex justify-center items-center bg-coral w-14 h-14 rounded-full shadow-lg",
         "hover:bg-coral-dark transition-all duration-200",
         "focus:outline-none focus:ring-2 focus:ring-white/20",
+        "mb-4", // Added margin bottom for spacing
         className
       )}
       aria-label="Recenter map"

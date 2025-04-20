@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -141,7 +140,11 @@ const RadarMap: React.FC = () => {
     const userLocation = { lat: location.latitude, lng: location.longitude };
     
     googleMapRef.current.panTo(userLocation);
-    googleMapRef.current.setZoom(18);
+    googleMapRef.current.animate({
+      zoom: 18,
+      duration: 1000,
+      easing: 'easeInOutCubic'
+    });
     setMapDragged(false);
     
     if (userMarkerRef.current) {
@@ -169,9 +172,13 @@ const RadarMap: React.FC = () => {
       const metersPerFoot = 0.3048;
       const radiusInMeters = value * metersPerFoot;
       
-      const zoomLevel = 19 - Math.log2(radiusInMeters / 10);
+      const zoomLevel = Math.min(19, Math.max(15, 19 - Math.log2(radiusInMeters / 10)));
       
-      googleMapRef.current.setZoom(zoomLevel);
+      googleMapRef.current.animate({
+        zoom: zoomLevel,
+        duration: 1000,
+        easing: 'easeInOutCubic'
+      });
     }
   };
 
@@ -179,9 +186,13 @@ const RadarMap: React.FC = () => {
     if (googleMapRef.current && location) {
       const metersPerFoot = 0.3048;
       const radiusInMeters = value * metersPerFoot;
-      const zoomLevel = 19 - Math.log2(radiusInMeters / 10);
+      const zoomLevel = Math.min(19, Math.max(15, 19 - Math.log2(radiusInMeters / 10)));
       
-      googleMapRef.current.setZoom(zoomLevel);
+      googleMapRef.current.animate({
+        zoom: zoomLevel,
+        duration: 1000,
+        easing: 'easeInOutCubic'
+      });
     }
   };
 
@@ -284,7 +295,7 @@ const RadarMap: React.FC = () => {
           {mapDragged && (
             <RecenterButton 
               onClick={handleRecenter} 
-              className="absolute bottom-48 right-6 z-10"
+              className="absolute bottom-60 right-6 z-10"
             />
           )}
         </AnimatePresence>
