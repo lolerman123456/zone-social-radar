@@ -1,3 +1,4 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -39,4 +40,63 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Smooth transitions for all elements */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Button press animation */
+button {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+button:active {
+  transform: translateY(2px);
+}
+
+/* Card and element animations */
+.animate-in {
+  animation: animateIn 0.3s ease forwards;
+}
+
+@keyframes animateIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Smooth slider transitions */
+input[type="range"] {
+  transition: all 0.3s ease;
+}
+
+/* Map zoom transitions */
+.gm-style {
+  transition: all 0.5s ease !important;
+}
+
+/* Pulsing animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(0.95);
+  }
+}
+
+.pulse {
+  animation: pulse 2s infinite ease-in-out;
 }
