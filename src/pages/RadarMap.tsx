@@ -219,20 +219,10 @@ const RadarMap: React.FC = () => {
         >
           <ChevronLeft className="h-5 w-5 text-white" />
         </motion.button>
-        <h1 className="text-xl font-semibold text-white">Home</h1>
+        <h1 className="text-2xl font-outfit font-bold text-white">Zoned</h1>
       </motion.div>
 
       <div className="w-full h-full">
-        <motion.div 
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="absolute top-20 left-0 right-0 z-10 text-center p-3"
-        >
-          <h1 className="text-4xl font-bold text-white mb-1">Zoned</h1>
-          <p className="text-gray-300 text-lg">Your proximity-based social radar</p>
-        </motion.div>
-
         <Wrapper apiKey={API_KEY} libraries={["places", "geometry"]}>
           <div className="w-full h-full">
             <div ref={mapRef} className="w-full h-full" />
