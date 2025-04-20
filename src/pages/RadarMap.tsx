@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -11,6 +12,7 @@ import LocationPermissionModal from '@/components/LocationPermissionModal';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import { darkMapStyles } from '@/lib/mapStyles';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 const API_KEY = "AIzaSyCjIwAJEFHqjHDOABZzeOQtvVg7F8ESYHI";
 const METERS_PER_FOOT = 0.3048;
