@@ -16,6 +16,56 @@ import { useNavigate } from 'react-router-dom';
 const API_KEY = "AIzaSyCjIwAJEFHqjHDOABZzeOQtvVg7F8ESYHI";
 const METERS_PER_FOOT = 0.3048;
 
+const animateMapTo = (
+  map: google.maps.Map, 
+  { center, zoom }: { center?: google.maps.LatLngLiteral, zoom?: number },
+  duration = 1000
+) => {
+  if (!map) return;
+  
+  const startTime = new Date().getTime();
+  const startCenter = map.getCenter()?.toJSON();
+  const startZoom = map.getZoom();
+  
+  const targetCenter = center || startCenter;
+  const targetZoom = zoom !== undefined ? zoom : startZoom;
+  
+  const deltaLat = targetCenter.lat - startCenter.lat;
+  const deltaLng = targetCenter.lng - startCenter.lng;
+  const deltaZoom = targetZoom - startZoom;
+  
+  const easeInOutCubic = (t: number) => {
+    return t < 0.5
+      ? 4 * t * t * t
+      : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+  };
+  
+  const animate = () => {
+    const currentTime = new Date().getTime();
+    const elapsed = currentTime - startTime;
+    
+    const progress = Math.min(1, elapsed / duration);
+    const easedProgress = easeInOutCubic(progress);
+    
+    if (deltaLat !== 0 || deltaLng !== 0) {
+      map.setCenter({
+        lat: startCenter.lat + deltaLat * easedProgress,
+        lng: startCenter.lng + deltaLng * easedProgress
+      });
+    }
+    
+    if (deltaZoom !== 0) {
+      map.setZoom(startZoom + deltaZoom * easedProgress);
+    }
+    
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  };
+  
+  requestAnimationFrame(animate);
+};
+
 const RadarMap: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -110,7 +160,7 @@ const RadarMap: React.FC = () => {
     radiusCircleRef.current.setCenter(userLocation);
     
     if (!mapDragged) {
-      googleMapRef.current.panTo(userLocation);
+      animateMapTo(googleMapRef.current, { center: userLocation }, 1000);
     }
   }, [location, mapDragged]);
 
@@ -139,12 +189,11 @@ const RadarMap: React.FC = () => {
     
     const userLocation = { lat: location.latitude, lng: location.longitude };
     
-    googleMapRef.current.panTo(userLocation);
-    googleMapRef.current.animate({
-      zoom: 18,
-      duration: 1000,
-      easing: 'easeInOutCubic'
-    });
+    animateMapTo(googleMapRef.current, {
+      center: userLocation,
+      zoom: 18
+    }, 1000);
+    
     setMapDragged(false);
     
     if (userMarkerRef.current) {
@@ -169,30 +218,19 @@ const RadarMap: React.FC = () => {
     setRadiusFeet(value);
     
     if (googleMapRef.current && location) {
-      const metersPerFoot = 0.3048;
-      const radiusInMeters = value * metersPerFoot;
-      
+      const radiusInMeters = value * METERS_PER_FOOT;
       const zoomLevel = Math.min(19, Math.max(15, 19 - Math.log2(radiusInMeters / 10)));
       
-      googleMapRef.current.animate({
-        zoom: zoomLevel,
-        duration: 1000,
-        easing: 'easeInOutCubic'
-      });
+      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 400);
     }
   };
 
   const handleRadiusChangeComplete = (value: number) => {
     if (googleMapRef.current && location) {
-      const metersPerFoot = 0.3048;
-      const radiusInMeters = value * metersPerFoot;
+      const radiusInMeters = value * METERS_PER_FOOT;
       const zoomLevel = Math.min(19, Math.max(15, 19 - Math.log2(radiusInMeters / 10)));
       
-      googleMapRef.current.animate({
-        zoom: zoomLevel,
-        duration: 1000,
-        easing: 'easeInOutCubic'
-      });
+      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 1000);
     }
   };
 
