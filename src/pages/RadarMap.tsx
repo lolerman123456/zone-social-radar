@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Wrapper } from "@googlemaps/react-wrapper";
@@ -11,9 +10,6 @@ import RecenterButton from '@/components/RecenterButton';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import { darkMapStyles } from '@/lib/mapStyles';
-import { ChevronLeft } from 'lucide-react';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, GeoPoint } from 'firebase/firestore';
-import { firestore } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const API_KEY = "AIzaSyCjIwAJEFHqjHDOABZzeOQtvVg7F8ESYHI";
@@ -216,15 +212,6 @@ const RadarMap: React.FC = () => {
         transition={{ delay: 0.2, duration: 0.5 }}
         className="absolute top-0 left-0 right-0 z-10 flex items-center px-4 py-3 glass-panel"
       >
-        <motion.button 
-          onClick={() => navigate(-1)} 
-          className="mr-3 rounded-full p-2 hover:bg-white/10"
-          whileTap={{ scale: 0.9 }}
-          whileHover={{ scale: 1.1 }}
-          aria-label="Back"
-        >
-          <ChevronLeft className="h-5 w-5 text-white" />
-        </motion.button>
         <h1 className="text-2xl font-outfit font-bold text-white">Zoned</h1>
       </motion.div>
 

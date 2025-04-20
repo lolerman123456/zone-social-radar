@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Instagram, Twitter, LogOut } from 'lucide-react';
+import { Instagram, Twitter, LogOut, Facebook, TikTok } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { toast } from 'sonner';
@@ -40,6 +40,9 @@ const ProfileDrawer: React.FC<ProfileDrawerProps> = ({
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [instagram, setInstagram] = useState('');
   const [twitter, setTwitter] = useState('');
+  const [snapchat, setSnapchat] = useState('');
+  const [tiktok, setTiktok] = useState('');
+  const [facebook, setFacebook] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -50,6 +53,9 @@ const ProfileDrawer: React.FC<ProfileDrawerProps> = ({
       displayName,
       instagram: instagram ? instagram.replace('@', '') : undefined,
       twitter: twitter ? twitter.replace('@', '') : undefined,
+      snapchat: snapchat ? snapchat.replace('@', '') : undefined,
+      tiktok: tiktok ? tiktok.replace('@', '') : undefined,
+      facebook: facebook ? facebook.replace('@', '') : undefined,
     });
     
     setIsSubmitting(false);
@@ -71,7 +77,7 @@ const ProfileDrawer: React.FC<ProfileDrawerProps> = ({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="bg-black/95 border-l border-white/10 text-white" side="right">
+      <SheetContent className="bg-black/95 border-l border-white/10 text-white overflow-y-auto" side="right">
         <SheetHeader className="mb-6">
           <SheetTitle className="text-white text-2xl">Your Profile</SheetTitle>
         </SheetHeader>
@@ -97,6 +103,7 @@ const ProfileDrawer: React.FC<ProfileDrawerProps> = ({
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               className="bg-white/5 border-white/10 text-white"
+              autoComplete="off"
             />
           </div>
           
@@ -110,6 +117,7 @@ const ProfileDrawer: React.FC<ProfileDrawerProps> = ({
               onChange={(e) => setInstagram(e.target.value)}
               placeholder="@username"
               className="bg-white/5 border-white/10 text-white"
+              autoComplete="off"
             />
           </div>
           
@@ -123,6 +131,52 @@ const ProfileDrawer: React.FC<ProfileDrawerProps> = ({
               onChange={(e) => setTwitter(e.target.value)}
               placeholder="@username"
               className="bg-white/5 border-white/10 text-white"
+              autoComplete="off"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="snapchat" className="flex items-center">
+              <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.206 3c.466.004 3.198.076 4.615 2.097.466.667.7 1.862.466 5.237l-.007.115c-.029.331-.063.742-.063.742s-.049.054-.148.054c-.098 0-1.013-.157-1.332-.157-.319 0-.737.069-1.007.436-.237.32-.187.89-.14 1.206l.008.057c.062.409.302 2.008 1.894 2.335.127.026.217.121.217.233 0 .233-.466.642-.989 1.051-.523.409-1.193.758-1.193 1.517 0 .642.989 1.867 3.363 1.867s3.363-1.226 3.363-1.867c0-.759-.67-1.108-1.193-1.517-.523-.409-.989-.817-.989-1.051 0-.112.09-.207.217-.233 1.592-.327 1.832-1.927 1.894-2.335l.008-.057c.048-.316.097-.885-.14-1.206-.27-.367-.688-.436-1.007-.436-.319 0-1.234.157-1.332.157-.099 0-.148-.054-.148-.054s-.034-.411-.063-.742l-.007-.115c-.234-3.375 0-4.57.466-5.237C16.596 3.076 19.328 3.004 19.794 3h.412v.001c.466.004 3.198.076 4.615 2.097.466.667.7 1.862.466 5.237l-.007.115c-.029.331-.063.742-.063.742s-.049.054-.148.054c-.098 0-1.013-.157-1.332-.157-.319 0-.737.069-1.007.436-.237.32-.187.89-.14 1.206l.008.057c.062.409.302 2.008 1.894 2.335.127.026.217.121.217.233 0 .233-.466.642-.989 1.051-.523.409-1.193.758-1.193 1.517 0 .642.989 1.867 3.363 1.867s3.363-1.226 3.363-1.867c0-.759-.67-1.108-1.193-1.517-.523-.409-.989-.817-.989-1.051 0-.112.09-.207.217-.233 1.592-.327 1.832-1.927 1.894-2.335l.008-.057c.048-.316.097-.885-.14-1.206-.27-.367-.688-.436-1.007-.436-.319 0-1.234.157-1.332.157-.099 0-.148-.054-.148-.054s-.034-.411-.063-.742l-.007-.115c-.234-3.375 0-4.57.466-5.237C8.404 3.076 11.136 3.004 11.602 3h.604zm0 18c-2.374 0-3.363-1.226-3.363-1.867 0-.759.67-1.108 1.193-1.517.523-.409.989-.817.989-1.051 0-.112-.09-.207-.217-.233-1.592-.327-1.832-1.927-1.894-2.335l-.008-.057c-.048-.316-.097-.885.14-1.206.27-.367.688-.436 1.007-.436.319 0 1.234.157 1.332.157.099 0 .148-.054.148-.054s.034-.411.063-.742l.007-.115c.234-3.375 0-4.57-.466-5.237C9.404 3.076 6.672 3.004 6.206 3h-.412c-.466.004-3.198.076-4.615 2.097-.466.667-.7 1.862-.466 5.237l.007.115c.029.331.063.742.063.742s.049.054.148.054c.098 0 1.013-.157 1.332-.157.319 0 .737.069 1.007.436.237.32.187.89.14 1.206l-.008.057c-.062.409-.302 2.008-1.894 2.335-.127.026-.217.121-.217.233 0 .233.466.642.989 1.051.523.409 1.193.758 1.193 1.517 0 .642-.989 1.867-3.363 1.867s-3.363-1.226-3.363-1.867c0-.759.67-1.108 1.193-1.517.523-.409.989-.817.989-1.051 0-.112-.09-.207-.217-.233-1.592-.327-1.832-1.927-1.894-2.335l-.008-.057c-.048-.316-.097-.885.14-1.206.27-.367.688-.436 1.007-.436.319 0 1.234.157 1.332.157.099 0 .148-.054.148-.054s.034-.411.063-.742l.007-.115c.234-3.375 0-4.57-.466-5.237C3.404 3.076.672 3.004.206 3H0v-.001C.466 3.004 3.198 3.076 4.615 5.097c.466.667.7 1.862.466 5.237l-.007.115c-.029.331-.063.742-.063.742s-.049.054-.148.054c-.098 0-1.013-.157-1.332-.157-.319 0-.737.069-1.007.436-.237.32-.187.89-.14 1.206l.008.057c.062.409.302 2.008 1.894 2.335.127.026.217.121.217.233 0 .233-.466.642-.989 1.051-.523.409-1.193.758-1.193 1.517 0 .642.989 1.867 3.363 1.867s3.363-1.226 3.363-1.867c0-.759-.67-1.108-1.193-1.517-.523-.409-.989-.817-.989-1.051 0-.112.09-.207.217-.233 1.592-.327 1.832-1.927 1.894-2.335l.008-.057c.048-.316.097-.885-.14-1.206-.27-.367-.688-.436-1.007-.436-.319 0-1.234.157-1.332.157-.099 0-.148-.054-.148-.054s-.034-.411-.063-.742l-.007-.115c-.234-3.375 0-4.57.466-5.237C15.596 3.076 18.328 3.004 18.794 3h.412z"/>
+              </svg>
+              Snapchat
+            </Label>
+            <Input
+              id="snapchat"
+              value={snapchat}
+              onChange={(e) => setSnapchat(e.target.value)}
+              placeholder="@username"
+              className="bg-white/5 border-white/10 text-white"
+              autoComplete="off"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tiktok" className="flex items-center">
+              <TikTok className="h-4 w-4 mr-2" /> TikTok
+            </Label>
+            <Input
+              id="tiktok"
+              value={tiktok}
+              onChange={(e) => setTiktok(e.target.value)}
+              placeholder="@username"
+              className="bg-white/5 border-white/10 text-white"
+              autoComplete="off"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="facebook" className="flex items-center">
+              <Facebook className="h-4 w-4 mr-2" /> Facebook
+            </Label>
+            <Input
+              id="facebook"
+              value={facebook}
+              onChange={(e) => setFacebook(e.target.value)}
+              placeholder="username"
+              className="bg-white/5 border-white/10 text-white"
+              autoComplete="off"
             />
           </div>
           
