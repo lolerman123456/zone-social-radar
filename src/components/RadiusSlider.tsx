@@ -19,7 +19,7 @@ const RadiusSlider: React.FC<RadiusSliderProps> = ({
   min = 5,
   max = 15,
   step = 0.5
-}) {
+}) => {
   const prevValueRef = useRef(value);
   
   useEffect(() => {
