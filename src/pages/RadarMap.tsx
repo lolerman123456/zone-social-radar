@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -161,7 +160,7 @@ const RadarMap: React.FC = () => {
     radiusCircleRef.current.setCenter(userLocation);
     
     if (!mapDragged) {
-      animateMapTo(googleMapRef.current, { center: userLocation }, 1000);
+      animateMapTo(googleMapRef.current, { center: userLocation }, 800);
     }
   }, [location, mapDragged]);
 
@@ -193,7 +192,7 @@ const RadarMap: React.FC = () => {
     animateMapTo(googleMapRef.current, {
       center: userLocation,
       zoom: 18
-    }, 1000);
+    }, 1500);
     
     setMapDragged(false);
     
@@ -220,18 +219,18 @@ const RadarMap: React.FC = () => {
     
     if (googleMapRef.current && location) {
       const radiusInMeters = value * METERS_PER_FOOT;
-      const zoomLevel = Math.min(19, Math.max(15, 20 - Math.log2(radiusInMeters / 5)));
+      const zoomLevel = Math.min(19, Math.max(15, 19 - Math.log2(radiusInMeters / 10)));
       
-      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 400);
+      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 300);
     }
   };
 
   const handleRadiusChangeComplete = (value: number) => {
     if (googleMapRef.current && location) {
       const radiusInMeters = value * METERS_PER_FOOT;
-      const zoomLevel = Math.min(19, Math.max(15, 20 - Math.log2(radiusInMeters / 5)));
+      const zoomLevel = Math.min(19, Math.max(15, 19 - Math.log2(radiusInMeters / 10)));
       
-      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 1000);
+      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 1200);
     }
   };
 
