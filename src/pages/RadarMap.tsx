@@ -18,8 +18,8 @@ const METERS_PER_FOOT = 0.3048;
 
 const ZOOM_MIN = 15;
 const ZOOM_MAX = 20;
-const RADIUS_MIN = 150;
-const RADIUS_MAX = 350;
+const RADIUS_MIN = 20;
+const RADIUS_MAX = 150;
 
 const animateMapTo = (
   map: google.maps.Map, 
@@ -39,18 +39,20 @@ const animateMapTo = (
   const deltaLng = targetCenter.lng - startCenter.lng;
   const deltaZoom = targetZoom - startZoom;
   
-  const easeInOutCubic = (t: number) => {
-    return t < 0.5
-      ? 4 * t * t * t
-      : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+  const easeOutCubic = (t: number) => {
+    return 1 - Math.pow(1 - t, 3);
   };
+  
+  if (map.get('animationFrameId')) {
+    cancelAnimationFrame(map.get('animationFrameId') as number);
+  }
   
   const animate = () => {
     const currentTime = new Date().getTime();
     const elapsed = currentTime - startTime;
     
     const progress = Math.min(1, elapsed / duration);
-    const easedProgress = easeInOutCubic(progress);
+    const easedProgress = easeOutCubic(progress);
     
     if (deltaLat !== 0 || deltaLng !== 0) {
       map.setCenter({
@@ -64,11 +66,15 @@ const animateMapTo = (
     }
     
     if (progress < 1) {
-      requestAnimationFrame(animate);
+      const frameId = requestAnimationFrame(animate);
+      map.set('animationFrameId', frameId);
+    } else {
+      map.set('animationFrameId', null);
     }
   };
   
-  requestAnimationFrame(animate);
+  const frameId = requestAnimationFrame(animate);
+  map.set('animationFrameId', frameId);
 };
 
 const RadarMap: React.FC = () => {
@@ -80,11 +86,12 @@ const RadarMap: React.FC = () => {
   const radiusCircleRef = useRef<google.maps.Circle | null>(null);
   const nearbyMarkers = useRef<google.maps.Marker[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [radiusFeet, setRadiusFeet] = useState(150);
-  const [radiusMeters, setRadiusMeters] = useState(150 * METERS_PER_FOOT);
+  const [radiusFeet, setRadiusFeet] = useState(RADIUS_MIN);
+  const [radiusMeters, setRadiusMeters] = useState(RADIUS_MIN * METERS_PER_FOOT);
   const [ghostMode, setGhostMode] = useState(false);
   const [showProfileDrawer, setShowProfileDrawer] = useState(false);
   const [mapDragged, setMapDragged] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   
   const { 
     location, 
@@ -115,6 +122,8 @@ const RadarMap: React.FC = () => {
         backgroundColor: '#10141B',
         maxZoom: ZOOM_MAX,
         minZoom: ZOOM_MIN,
+        tilt: 0,
+        clickableIcons: false
       });
       
       const userCircleMarker = new google.maps.Marker({
@@ -147,6 +156,12 @@ const RadarMap: React.FC = () => {
         setMapDragged(true);
       });
       
+      map.addListener("idle", () => {
+        if (isAnimating) {
+          setIsAnimating(false);
+        }
+      });
+      
       googleMapRef.current = map;
       userMarkerRef.current = userCircleMarker;
       radiusCircleRef.current = radarCircle;
@@ -155,7 +170,7 @@ const RadarMap: React.FC = () => {
     };
     
     initMap();
-  }, [location, mapLoaded, radiusFeet]);
+  }, [location, mapLoaded, radiusFeet, isAnimating]);
 
   useEffect(() => {
     if (!location || !googleMapRef.current || !userMarkerRef.current || !radiusCircleRef.current) return;
@@ -167,6 +182,7 @@ const RadarMap: React.FC = () => {
     
     if (!mapDragged) {
       const zoomLevel = getZoomFromRadius(radiusFeet);
+      setIsAnimating(true);
       animateMapTo(googleMapRef.current, { center: userLocation, zoom: zoomLevel }, 900);
     }
   }, [location, mapDragged, radiusFeet]);
@@ -196,10 +212,12 @@ const RadarMap: React.FC = () => {
     
     const userLocation = { lat: location.latitude, lng: location.longitude };
     
+    setIsAnimating(true);
+    
     animateMapTo(googleMapRef.current, {
       center: userLocation,
-      zoom: 18
-    }, 1500);
+      zoom: getZoomFromRadius(radiusFeet)
+    }, 1200);
     
     setMapDragged(false);
     
@@ -207,14 +225,14 @@ const RadarMap: React.FC = () => {
       const originalIcon = userMarkerRef.current.getIcon();
       userMarkerRef.current.setIcon({
         ...(originalIcon as google.maps.Symbol),
-        scale: 12,
+        scale: 16,
       });
       
       setTimeout(() => {
         if (userMarkerRef.current) {
           userMarkerRef.current.setIcon({
             ...(originalIcon as google.maps.Symbol),
-            scale: 9,
+            scale: 14,
           });
         }
       }, 300);
@@ -223,12 +241,12 @@ const RadarMap: React.FC = () => {
 
   const getZoomFromRadius = (feet: number) => {
     const meters = feet * METERS_PER_FOOT;
-    const baseZoom = 19.5;
+    const baseZoom = 20;
     return Math.max(
       ZOOM_MIN,
       Math.min(
         ZOOM_MAX,
-        baseZoom - Math.log2(meters / 25)
+        baseZoom - Math.log2(meters / 15)
       )
     );
   };
@@ -238,14 +256,16 @@ const RadarMap: React.FC = () => {
 
     if (googleMapRef.current && location) {
       const zoomLevel = getZoomFromRadius(val);
-      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 340);
+      setIsAnimating(true);
+      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 300);
     }
   };
 
   const handleRadiusChangeComplete = (val: number) => {
     if (googleMapRef.current && location) {
       const zoomLevel = getZoomFromRadius(val);
-      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 1050);
+      setIsAnimating(true);
+      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 800);
     }
   };
 

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Slider } from "@/components/ui/slider";
 import { motion } from "framer-motion";
@@ -15,8 +16,8 @@ const RadiusSlider: React.FC<RadiusSliderProps> = ({
   value,
   onChange,
   onChangeComplete,
-  min = 150,
-  max = 350,
+  min = 20,
+  max = 150,
   step = 1
 }) => {
   const prevValueRef = useRef(value);
