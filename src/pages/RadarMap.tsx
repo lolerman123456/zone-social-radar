@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,8 +15,6 @@ import { ChevronLeft } from 'lucide-react';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, GeoPoint } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
-
-// No more mock users
 
 const API_KEY = "AIzaSyCjIwAJEFHqjHDOABZzeOQtvVg7F8ESYHI";
 const METERS_PER_FOOT = 0.3048;
@@ -37,7 +34,6 @@ const RadarMap: React.FC = () => {
   const [showProfileDrawer, setShowProfileDrawer] = useState(false);
   const [mapDragged, setMapDragged] = useState(false);
   
-  // Get user location
   const { 
     location, 
     error: locationError, 
@@ -50,17 +46,14 @@ const RadarMap: React.FC = () => {
     maximumAge: 0
   });
 
-  // Check if a modal should be shown for location permissions
   const showLocationModal = !location && (permissionState === 'prompt' || permissionDenied);
 
-  // Initialize map when location is available
   useEffect(() => {
     if (!location || !mapRef.current || mapLoaded) return;
     
     const initMap = () => {
       const userLocation = { lat: location.latitude, lng: location.longitude };
       
-      // Create Google Map instance
       const map = new google.maps.Map(mapRef.current!, {
         center: userLocation,
         zoom: 18,
@@ -72,7 +65,6 @@ const RadarMap: React.FC = () => {
         minZoom: 15,
       });
       
-      // Create user marker
       const userMarker = new google.maps.Marker({
         position: userLocation,
         map,
@@ -86,7 +78,6 @@ const RadarMap: React.FC = () => {
         zIndex: 999
       });
       
-      // Create radius circle
       const radiusCircle = new google.maps.Circle({
         map,
         center: userLocation,
@@ -99,7 +90,6 @@ const RadarMap: React.FC = () => {
         zIndex: 1
       });
       
-      // Add map event listeners
       map.addListener("dragstart", () => {
         setMapDragged(true);
       });
@@ -114,7 +104,6 @@ const RadarMap: React.FC = () => {
     initMap();
   }, [location, mapLoaded, radiusMeters]);
 
-  // Update user position and radius circle when location changes
   useEffect(() => {
     if (!location || !googleMapRef.current || !userMarkerRef.current || !radiusCircleRef.current) return;
     
@@ -128,7 +117,6 @@ const RadarMap: React.FC = () => {
     }
   }, [location, mapDragged]);
 
-  // Update radius circle when radius changes
   useEffect(() => {
     if (!radiusCircleRef.current) return;
     
@@ -137,32 +125,27 @@ const RadarMap: React.FC = () => {
     setRadiusMeters(newRadiusMeters);
   }, [radiusFeet]);
 
-  // Update nearby markers visibility based on ghost mode
   useEffect(() => {
     nearbyMarkers.current.forEach(marker => {
       marker.setVisible(!ghostMode);
     });
   }, [ghostMode]);
 
-  // Request location permission on mount if not already granted
   useEffect(() => {
     if (!permissionState) {
       requestPermission();
     }
   }, [permissionState, requestPermission]);
 
-  // Recenter the map on user location
   const handleRecenter = () => {
     if (!googleMapRef.current || !location) return;
     
     const userLocation = { lat: location.latitude, lng: location.longitude };
     
-    // Use smooth animation to pan and zoom
     googleMapRef.current.panTo(userLocation);
     googleMapRef.current.setZoom(18);
     setMapDragged(false);
     
-    // Flash the user marker briefly
     if (userMarkerRef.current) {
       const originalIcon = userMarkerRef.current.getIcon();
       userMarkerRef.current.setIcon({
@@ -186,23 +169,15 @@ const RadarMap: React.FC = () => {
   };
   
   const handleRadiusChangeComplete = (value: number) => {
-    // When radius change is complete, adjust zoom level
     if (googleMapRef.current && location) {
-      // Calculate appropriate zoom based on radius
-      // Smaller radius = higher zoom number
       const minZoom = 16;
       const maxZoom = 19;
       const minRadius = 5;
       const maxRadius = 15;
       
-      // Calculate a zoom level between minZoom and maxZoom based on the radius
       const zoomLevel = maxZoom - ((value - minRadius) / (maxRadius - minRadius)) * (maxZoom - minZoom);
       
-      // Apply the zoom with animation
-      googleMapRef.current.animateCamera({
-        zoom: zoomLevel,
-        duration: 500
-      });
+      googleMapRef.current.setZoom(zoomLevel);
     }
   };
   
@@ -219,7 +194,6 @@ const RadarMap: React.FC = () => {
     if (!user) return;
     
     try {
-      // In a real app, you'd update the profile in Firestore
       console.log("Profile update data:", data);
       toast.success("Profile updated successfully");
     } catch (error) {
@@ -228,10 +202,8 @@ const RadarMap: React.FC = () => {
     }
   };
   
-  // Render Google Maps with wrapper
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">
-      {/* Top header */}
       <motion.div 
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -250,9 +222,7 @@ const RadarMap: React.FC = () => {
         <h1 className="text-xl font-semibold text-white">Home</h1>
       </motion.div>
 
-      {/* Main content with map */}
       <div className="w-full h-full">
-        {/* App title */}
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -263,7 +233,6 @@ const RadarMap: React.FC = () => {
           <p className="text-gray-300 text-lg">Your proximity-based social radar</p>
         </motion.div>
 
-        {/* Map container */}
         <Wrapper apiKey={API_KEY} libraries={["places", "geometry"]}>
           <div className="w-full h-full">
             <div ref={mapRef} className="w-full h-full" />
@@ -285,7 +254,6 @@ const RadarMap: React.FC = () => {
           </div>
         )}
         
-        {/* Radius slider */}
         <motion.div 
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -299,7 +267,6 @@ const RadarMap: React.FC = () => {
           />
         </motion.div>
         
-        {/* Bottom controls */}
         <motion.div 
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -328,7 +295,6 @@ const RadarMap: React.FC = () => {
           </motion.div>
         </motion.div>
         
-        {/* Recenter button - always visible with animation */}
         <AnimatePresence>
           {mapDragged && (
             <RecenterButton 
@@ -339,14 +305,12 @@ const RadarMap: React.FC = () => {
         </AnimatePresence>
       </div>
       
-      {/* Permission modal */}
       <LocationPermissionModal 
         isOpen={showLocationModal}
         onRequestPermission={requestPermission}
         permissionDenied={permissionDenied}
       />
       
-      {/* Profile drawer */}
       <ProfileDrawer 
         open={showProfileDrawer}
         onOpenChange={setShowProfileDrawer}
@@ -354,7 +318,7 @@ const RadarMap: React.FC = () => {
         ghostMode={ghostMode}
         onGhostModeChange={handleGhostMode => {
           setGhostMode(handleGhostMode);
-          setShowProfileDrawer(false); // Close drawer when toggling ghost mode
+          setShowProfileDrawer(false);
         }}
         onUpdateProfile={handleUpdateProfile}
       />
