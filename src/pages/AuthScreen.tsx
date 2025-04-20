@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,14 +9,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import Logo from '@/components/Logo';
+import { AlertCircle } from 'lucide-react';
 
 const AuthScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const { signIn, signUp, signInWithGoogle, setError } = useAuth();
+  const { signIn, signUp, signInWithGoogle, error, setError } = useAuth();
   const navigate = useNavigate();
+
+  // Clear error when switching tabs or unmounting
+  useEffect(() => {
+    return () => {
+      if (setError) setError(null);
+    };
+  }, [setError]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,9 +36,12 @@ const AuthScreen: React.FC = () => {
     try {
       setIsSubmitting(true);
       await signIn(email, password);
+      toast.success('Signed in successfully!');
       navigate('/');
     } catch (err) {
       console.error('Login error:', err);
+      // Error is already set in the useAuth hook
+      // We don't need to do anything here as we'll display it from the context
     } finally {
       setIsSubmitting(false);
     }
@@ -51,10 +62,11 @@ const AuthScreen: React.FC = () => {
     try {
       setIsSubmitting(true);
       await signUp(email, password);
-      navigate('/');
       toast.success('Account created successfully!');
+      navigate('/');
     } catch (err) {
       console.error('Registration error:', err);
+      // Error is already set in the useAuth hook
     } finally {
       setIsSubmitting(false);
     }
@@ -64,9 +76,11 @@ const AuthScreen: React.FC = () => {
     try {
       setIsSubmitting(true);
       await signInWithGoogle();
+      toast.success('Signed in with Google successfully!');
       navigate('/');
     } catch (err) {
       console.error('Google sign in error:', err);
+      // Error is already set in the useAuth hook
     } finally {
       setIsSubmitting(false);
     }
@@ -94,6 +108,13 @@ const AuthScreen: React.FC = () => {
                 <CardDescription className="text-gray-400">Sign in to your account to continue</CardDescription>
               </CardHeader>
               <CardContent>
+                {error && (
+                  <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-md flex items-start">
+                    <AlertCircle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-red-400">{error}</span>
+                  </div>
+                )}
+                
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
@@ -175,6 +196,13 @@ const AuthScreen: React.FC = () => {
                 <CardDescription className="text-gray-400">Enter your details to create an account</CardDescription>
               </CardHeader>
               <CardContent>
+                {error && (
+                  <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-md flex items-start">
+                    <AlertCircle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-red-400">{error}</span>
+                  </div>
+                )}
+                
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>

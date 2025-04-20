@@ -5,7 +5,8 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   signInWithPopup, 
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut as firebaseSignOut,
 } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 
@@ -39,10 +40,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
+      setError(null); // Clear any previous errors
       return result.user;
     } catch (error) {
+      console.error('Sign in error:', error);
       if (error instanceof Error) {
-        setError(error.message);
+        // Parse Firebase error messages to be more user-friendly
+        let errorMessage = error.message;
+        if (errorMessage.includes('auth/invalid-credential')) {
+          errorMessage = 'Invalid email or password. Please try again.';
+        } else if (errorMessage.includes('auth/user-not-found')) {
+          errorMessage = 'No account found with this email. Please sign up.';
+        } else if (errorMessage.includes('auth/wrong-password')) {
+          errorMessage = 'Incorrect password. Please try again.';
+        } else if (errorMessage.includes('auth/invalid-email')) {
+          errorMessage = 'Invalid email format. Please check and try again.';
+        }
+        
+        setError(errorMessage);
       } else {
         setError('An unknown error occurred during sign in');
       }
@@ -53,10 +68,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string) => {
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
+      setError(null); // Clear any previous errors
       return result.user;
     } catch (error) {
+      console.error('Sign up error:', error);
       if (error instanceof Error) {
-        setError(error.message);
+        // Parse Firebase error messages to be more user-friendly
+        let errorMessage = error.message;
+        if (errorMessage.includes('auth/email-already-in-use')) {
+          errorMessage = 'This email is already registered. Please sign in instead.';
+        } else if (errorMessage.includes('auth/weak-password')) {
+          errorMessage = 'Password is too weak. Please use at least 6 characters.';
+        } else if (errorMessage.includes('auth/invalid-email')) {
+          errorMessage = 'Invalid email format. Please check and try again.';
+        }
+        
+        setError(errorMessage);
       } else {
         setError('An unknown error occurred during sign up');
       }
@@ -67,10 +94,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
+      setError(null); // Clear any previous errors
       return result.user;
     } catch (error) {
+      console.error('Google sign in error:', error);
       if (error instanceof Error) {
-        setError(error.message);
+        // Parse Firebase error messages to be more user-friendly
+        let errorMessage = error.message;
+        if (errorMessage.includes('popup-closed-by-user')) {
+          errorMessage = 'Sign-in cancelled. Please try again.';
+        } else if (errorMessage.includes('account-exists-with-different-credential')) {
+          errorMessage = 'An account already exists with the same email but different sign-in credentials.';
+        }
+        
+        setError(errorMessage);
       } else {
         setError('An unknown error occurred during Google sign in');
       }
@@ -80,8 +117,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      await auth.signOut();
+      await firebaseSignOut(auth);
+      setError(null); // Clear any previous errors
     } catch (error) {
+      console.error('Sign out error:', error);
       if (error instanceof Error) {
         setError(error.message);
       } else {
