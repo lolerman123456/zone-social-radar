@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -32,7 +33,7 @@ const animateMapTo = (
   
   const deltaLat = targetCenter.lat - startCenter.lat;
   const deltaLng = targetCenter.lng - startCenter.lng;
-  const deltaZoom = targetZoom - startCenter.zoom;
+  const deltaZoom = targetZoom - startZoom;
   
   const easeInOutCubic = (t: number) => {
     return t < 0.5
