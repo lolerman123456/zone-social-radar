@@ -16,6 +16,11 @@ import { useNavigate } from 'react-router-dom';
 const API_KEY = "AIzaSyCjIwAJEFHqjHDOABZzeOQtvVg7F8ESYHI";
 const METERS_PER_FOOT = 0.3048;
 
+const ZOOM_MIN = 15;
+const ZOOM_MAX = 20;
+const RADIUS_MIN = 150;
+const RADIUS_MAX = 350;
+
 const animateMapTo = (
   map: google.maps.Map, 
   { center, zoom }: { center?: google.maps.LatLngLiteral, zoom?: number },
@@ -367,8 +372,6 @@ const RadarMap: React.FC = () => {
           setShowProfileDrawer(false);
         }}
         onUpdateProfile={handleUpdateProfile}
-        signOutButtonLabel="Sign out"
-        signOutButtonClassName="btn-coral"
       />
     </div>
   );
