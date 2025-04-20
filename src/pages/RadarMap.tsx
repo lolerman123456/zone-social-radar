@@ -56,7 +56,7 @@ const RadarMap: React.FC = () => {
       
       const map = new google.maps.Map(mapRef.current!, {
         center: userLocation,
-        zoom: 18,
+        zoom: 19,
         disableDefaultUI: true,
         styles: darkMapStyles,
         gestureHandling: "greedy",
@@ -81,7 +81,7 @@ const RadarMap: React.FC = () => {
       const radiusCircle = new google.maps.Circle({
         map,
         center: userLocation,
-        radius: radiusMeters,
+        radius: radiusFeet * METERS_PER_FOOT,
         strokeColor: "#FF6F61",
         strokeOpacity: 0.8,
         strokeWeight: 2,
@@ -102,7 +102,7 @@ const RadarMap: React.FC = () => {
     };
 
     initMap();
-  }, [location, mapLoaded, radiusMeters]);
+  }, [location, mapLoaded, radiusFeet]);
 
   useEffect(() => {
     if (!location || !googleMapRef.current || !userMarkerRef.current || !radiusCircleRef.current) return;
@@ -166,21 +166,27 @@ const RadarMap: React.FC = () => {
 
   const handleRadiusChange = (value: number) => {
     setRadiusFeet(value);
-  };
-  
-  const handleRadiusChangeComplete = (value: number) => {
+    
     if (googleMapRef.current && location) {
-      const minZoom = 16;
-      const maxZoom = 19;
-      const minRadius = 5;
-      const maxRadius = 15;
+      const metersPerFoot = 0.3048;
+      const radiusInMeters = value * metersPerFoot;
       
-      const zoomLevel = maxZoom - ((value - minRadius) / (maxRadius - minRadius)) * (maxZoom - minZoom);
+      const zoomLevel = 19 - Math.log2(radiusInMeters / 10);
       
       googleMapRef.current.setZoom(zoomLevel);
     }
   };
-  
+
+  const handleRadiusChangeComplete = (value: number) => {
+    if (googleMapRef.current && location) {
+      const metersPerFoot = 0.3048;
+      const radiusInMeters = value * metersPerFoot;
+      const zoomLevel = 19 - Math.log2(radiusInMeters / 10);
+      
+      googleMapRef.current.setZoom(zoomLevel);
+    }
+  };
+
   const handleGhostModeChange = (enabled: boolean) => {
     setGhostMode(enabled);
     if (enabled) {
@@ -189,7 +195,7 @@ const RadarMap: React.FC = () => {
       toast.success("Ghost mode disabled");
     }
   };
-  
+
   const handleUpdateProfile = async (data: any) => {
     if (!user) return;
     
@@ -201,7 +207,7 @@ const RadarMap: React.FC = () => {
       toast.error("Failed to update profile");
     }
   };
-  
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">
       <motion.div 
