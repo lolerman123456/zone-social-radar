@@ -1,221 +1,109 @@
 
+// Dark theme with building outlines for a "radar-like" effect, inspired by your reference image.
 export const darkMapStyles = [
   {
-    featureType: "all",
-    elementType: "geometry",
-    stylers: [
-      {
-        color: "#101010"
-      }
+    "elementType": "geometry",
+    "stylers": [
+      { "color": "#10141B" }
     ]
   },
   {
-    featureType: "all",
-    elementType: "labels.text.fill",
-    stylers: [
-      {
-        color: "#757575"
-      }
+    "elementType": "labels.icon",
+    "stylers": [
+      { "visibility": "off" }
     ]
   },
   {
-    featureType: "all",
-    elementType: "labels.text.stroke",
-    stylers: [
-      {
-        color: "#212121"
-      }
+    "featureType": "road",
+    "elementType": "geometry",
+    "stylers": [
+      { "color": "#181D26" }
     ]
   },
   {
-    featureType: "administrative",
-    elementType: "geometry",
-    stylers: [
-      {
-        color: "#333333"
-      }
+    "featureType": "road",
+    "elementType": "geometry.stroke",
+    "stylers": [
+      { "color": "#1F232C" },
+      { "weight": 1 }
     ]
   },
   {
-    featureType: "administrative.country",
-    elementType: "labels.text.fill",
-    stylers: [
-      {
-        color: "#9e9e9e"
-      }
+    "featureType": "road",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      { "color": "#38414e" }
     ]
   },
   {
-    featureType: "administrative.land_parcel",
-    stylers: [
-      {
-        visibility: "off"
-      }
+    "featureType": "road",
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      { "color": "#141821" }
     ]
   },
   {
-    featureType: "administrative.locality",
-    elementType: "labels.text.fill",
-    stylers: [
-      {
-        color: "#bdbdbd"
-      }
+    "featureType": "poi",
+    "stylers": [
+      { "visibility": "off" }
     ]
   },
   {
-    featureType: "building",
-    elementType: "geometry.fill",
-    stylers: [
-      {
-        color: "#1a1a1a"
-      }
+    "featureType": "transit",
+    "stylers": [
+      { "visibility": "off" }
     ]
   },
   {
-    featureType: "building",
-    elementType: "geometry.stroke",
-    stylers: [
-      {
-        color: "#444444"
-      },
-      {
-        weight: 1
-      }
+    "featureType": "water",
+    "elementType": "geometry",
+    "stylers": [
+      { "color": "#131822" }
     ]
   },
   {
-    featureType: "landscape",
-    elementType: "geometry",
-    stylers: [
-      {
-        color: "#161616"
-      }
+    // Outlined buildings, inspired by your image
+    "featureType": "building",
+    "elementType": "geometry",
+    "stylers": [
+      { "color": "#13171d" },
+      { "weight": 1 }
     ]
   },
   {
-    featureType: "poi",
-    elementType: "geometry",
-    stylers: [
-      {
-        color: "#1a1a1a"
-      }
+    "featureType": "building",
+    "elementType": "geometry.stroke",
+    "stylers": [
+      { "color": "#8E9196" },
+      { "weight": 2 }
     ]
   },
   {
-    featureType: "poi",
-    elementType: "labels.text.fill",
-    stylers: [
-      {
-        color: "#757575"
-      }
+    "featureType": "administrative.country",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      { "color": "#656a77" }
     ]
   },
   {
-    featureType: "poi.park",
-    elementType: "geometry",
-    stylers: [
-      {
-        color: "#181818"
-      }
+    "featureType": "administrative.neighborhood",
+    "elementType": "geometry.stroke",
+    "stylers": [
+      { "color": "#1e1e24", "weight": 1 }
     ]
   },
   {
-    featureType: "poi.park",
-    elementType: "labels.text.fill",
-    stylers: [
-      {
-        color: "#616161"
-      }
+    "featureType": "administrative.land_parcel",
+    "stylers": [
+      { "visibility": "off" }
     ]
   },
   {
-    featureType: "poi.park",
-    elementType: "labels.text.stroke",
-    stylers: [
-      {
-        color: "#1b1b1b"
-      }
-    ]
-  },
-  {
-    featureType: "road",
-    elementType: "geometry.fill",
-    stylers: [
-      {
-        color: "#252525"
-      }
-    ]
-  },
-  {
-    featureType: "road",
-    elementType: "labels.text.fill",
-    stylers: [
-      {
-        color: "#8a8a8a"
-      }
-    ]
-  },
-  {
-    featureType: "road.arterial",
-    elementType: "geometry",
-    stylers: [
-      {
-        color: "#2a2a2a"
-      }
-    ]
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry",
-    stylers: [
-      {
-        color: "#2c2c2c"
-      }
-    ]
-  },
-  {
-    featureType: "road.highway.controlled_access",
-    elementType: "geometry",
-    stylers: [
-      {
-        color: "#333333"
-      }
-    ]
-  },
-  {
-    featureType: "road.local",
-    elementType: "labels.text.fill",
-    stylers: [
-      {
-        color: "#616161"
-      }
-    ]
-  },
-  {
-    featureType: "transit",
-    elementType: "labels.text.fill",
-    stylers: [
-      {
-        color: "#757575"
-      }
-    ]
-  },
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [
-      {
-        color: "#080808"
-      }
-    ]
-  },
-  {
-    featureType: "water",
-    elementType: "labels.text.fill",
-    stylers: [
-      {
-        color: "#3d3d3d"
-      }
+    // Subtle grid lines, dark blue/gray
+    "featureType": "all",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      { "color": "#28375b" }
     ]
   }
 ];

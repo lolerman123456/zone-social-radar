@@ -15,8 +15,8 @@ const RadiusSlider: React.FC<RadiusSliderProps> = ({
   value,
   onChange,
   onChangeComplete,
-  min = 20,
-  max = 150,
+  min = 150,
+  max = 350,
   step = 1
 }) => {
   const prevValueRef = useRef(value);
@@ -44,7 +44,7 @@ const RadiusSlider: React.FC<RadiusSliderProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
       >
-        <span className="bg-black/50 backdrop-blur-sm px-4 py-1.5 rounded-full">
+        <span className="bg-black/50 backdrop-blur-sm px-4 py-1.5 rounded-full text-white">
           {value.toFixed(1)} feet radius
         </span>
       </motion.div>

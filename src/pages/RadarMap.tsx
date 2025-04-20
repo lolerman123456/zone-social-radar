@@ -75,8 +75,8 @@ const RadarMap: React.FC = () => {
   const radiusCircleRef = useRef<google.maps.Circle | null>(null);
   const nearbyMarkers = useRef<google.maps.Marker[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [radiusFeet, setRadiusFeet] = useState(10);
-  const [radiusMeters, setRadiusMeters] = useState(10 * METERS_PER_FOOT);
+  const [radiusFeet, setRadiusFeet] = useState(150);
+  const [radiusMeters, setRadiusMeters] = useState(150 * METERS_PER_FOOT);
   const [ghostMode, setGhostMode] = useState(false);
   const [showProfileDrawer, setShowProfileDrawer] = useState(false);
   const [mapDragged, setMapDragged] = useState(false);
@@ -103,38 +103,39 @@ const RadarMap: React.FC = () => {
       
       const map = new google.maps.Map(mapRef.current!, {
         center: userLocation,
-        zoom: 19,
+        zoom: 18,
         disableDefaultUI: true,
         styles: darkMapStyles,
         gestureHandling: "greedy",
-        backgroundColor: '#000000',
-        maxZoom: 20,
-        minZoom: 15,
+        backgroundColor: '#10141B',
+        maxZoom: ZOOM_MAX,
+        minZoom: ZOOM_MIN,
       });
       
-      const userMarker = new google.maps.Marker({
+      const userCircleMarker = new google.maps.Marker({
         position: userLocation,
         map,
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          fillColor: "#FF6F61",
+          fillColor: "#ea384c",
           fillOpacity: 1,
-          strokeWeight: 0,
-          scale: 9
+          strokeColor: "#ea384c",
+          strokeWeight: 2,
+          scale: 14
         },
-        zIndex: 999
+        zIndex: 1000
       });
       
-      const radiusCircle = new google.maps.Circle({
+      const radarCircle = new google.maps.Circle({
         map,
         center: userLocation,
         radius: radiusFeet * METERS_PER_FOOT,
-        strokeColor: "#FF6F61",
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        fillColor: "#FF6F61",
-        fillOpacity: 0.15,
-        zIndex: 1
+        strokeColor: "#ea384c",
+        strokeOpacity: 1,
+        strokeWeight: 3,
+        fillOpacity: 0.10,
+        fillColor: "#ea384c",
+        zIndex: 500,
       });
       
       map.addListener("dragstart", () => {
@@ -142,12 +143,12 @@ const RadarMap: React.FC = () => {
       });
       
       googleMapRef.current = map;
-      userMarkerRef.current = userMarker;
-      radiusCircleRef.current = radiusCircle;
+      userMarkerRef.current = userCircleMarker;
+      radiusCircleRef.current = radarCircle;
       nearbyMarkers.current = [];
       setMapLoaded(true);
     };
-
+    
     initMap();
   }, [location, mapLoaded, radiusFeet]);
 
@@ -160,9 +161,10 @@ const RadarMap: React.FC = () => {
     radiusCircleRef.current.setCenter(userLocation);
     
     if (!mapDragged) {
-      animateMapTo(googleMapRef.current, { center: userLocation }, 800);
+      const zoomLevel = getZoomFromRadius(radiusFeet);
+      animateMapTo(googleMapRef.current, { center: userLocation, zoom: zoomLevel }, 900);
     }
-  }, [location, mapDragged]);
+  }, [location, mapDragged, radiusFeet]);
 
   useEffect(() => {
     if (!radiusCircleRef.current) return;
@@ -214,23 +216,31 @@ const RadarMap: React.FC = () => {
     }
   };
 
-  const handleRadiusChange = (value: number) => {
-    setRadiusFeet(value);
-    
+  const getZoomFromRadius = (feet: number) => {
+    const meters = feet * METERS_PER_FOOT;
+    const baseZoom = 19.5;
+    return Math.max(
+      ZOOM_MIN,
+      Math.min(
+        ZOOM_MAX,
+        baseZoom - Math.log2(meters / 25)
+      )
+    );
+  };
+
+  const handleRadiusChange = (val: number) => {
+    setRadiusFeet(val);
+
     if (googleMapRef.current && location) {
-      const radiusInMeters = value * METERS_PER_FOOT;
-      const zoomLevel = Math.min(19, Math.max(15, 19 - Math.log2(radiusInMeters / 10)));
-      
-      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 300);
+      const zoomLevel = getZoomFromRadius(val);
+      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 340);
     }
   };
 
-  const handleRadiusChangeComplete = (value: number) => {
+  const handleRadiusChangeComplete = (val: number) => {
     if (googleMapRef.current && location) {
-      const radiusInMeters = value * METERS_PER_FOOT;
-      const zoomLevel = Math.min(19, Math.max(15, 19 - Math.log2(radiusInMeters / 10)));
-      
-      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 1200);
+      const zoomLevel = getZoomFromRadius(val);
+      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 1050);
     }
   };
 
@@ -256,7 +266,7 @@ const RadarMap: React.FC = () => {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-black">
+    <div className="relative w-screen h-screen overflow-hidden bg-[#10141B]">
       <motion.div 
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -295,8 +305,10 @@ const RadarMap: React.FC = () => {
           className="absolute bottom-36 left-0 right-0 px-6 z-10"
         >
           <RadiusSlider 
-            value={radiusFeet} 
-            onChange={handleRadiusChange} 
+            value={radiusFeet}
+            min={RADIUS_MIN}
+            max={RADIUS_MAX}
+            onChange={handleRadiusChange}
             onChangeComplete={handleRadiusChangeComplete}
           />
         </motion.div>
@@ -355,6 +367,8 @@ const RadarMap: React.FC = () => {
           setShowProfileDrawer(false);
         }}
         onUpdateProfile={handleUpdateProfile}
+        signOutButtonLabel="Sign out"
+        signOutButtonClassName="btn-coral"
       />
     </div>
   );
