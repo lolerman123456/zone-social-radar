@@ -32,7 +32,7 @@ const animateMapTo = (
   
   const deltaLat = targetCenter.lat - startCenter.lat;
   const deltaLng = targetCenter.lng - startCenter.lng;
-  const deltaZoom = targetZoom - startZoom;
+  const deltaZoom = targetZoom - startCenter.zoom;
   
   const easeInOutCubic = (t: number) => {
     return t < 0.5
@@ -219,7 +219,7 @@ const RadarMap: React.FC = () => {
     
     if (googleMapRef.current && location) {
       const radiusInMeters = value * METERS_PER_FOOT;
-      const zoomLevel = Math.min(19, Math.max(15, 19 - Math.log2(radiusInMeters / 10)));
+      const zoomLevel = Math.min(19, Math.max(15, 20 - Math.log2(radiusInMeters / 5)));
       
       animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 400);
     }
@@ -228,7 +228,7 @@ const RadarMap: React.FC = () => {
   const handleRadiusChangeComplete = (value: number) => {
     if (googleMapRef.current && location) {
       const radiusInMeters = value * METERS_PER_FOOT;
-      const zoomLevel = Math.min(19, Math.max(15, 19 - Math.log2(radiusInMeters / 10)));
+      const zoomLevel = Math.min(19, Math.max(15, 20 - Math.log2(radiusInMeters / 5)));
       
       animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 1000);
     }
