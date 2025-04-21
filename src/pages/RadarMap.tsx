@@ -35,7 +35,7 @@ const animateMapTo = (
   const targetCenter = center || startCenter;
   const targetZoom = zoom !== undefined ? zoom : startZoom;
   
-  if (center) {
+  if (center && map.panTo) {
     map.panTo(targetCenter);
   }
   
@@ -80,110 +80,136 @@ const RadarMap: React.FC = () => {
     if (!location || !mapRef.current || mapLoaded) return;
     
     const initMap = () => {
-      const userLocation = { lat: location.latitude, lng: location.longitude };
-      
-      const map = new google.maps.Map(mapRef.current!, {
-        center: userLocation,
-        zoom: getZoomFromRadius(radiusFeet),
-        disableDefaultUI: true,
-        styles: darkMapStyles,
-        gestureHandling: "greedy",
-        backgroundColor: '#10141B',
-        maxZoom: ZOOM_MAX,
-        minZoom: ZOOM_MIN,
-        tilt: 0,
-        clickableIcons: false
-      });
-
-      const userCircleMarker = new google.maps.Marker({
-        position: userLocation,
-        map,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          fillColor: "#ea384c",
-          fillOpacity: 1,
-          strokeColor: "#ea384c",
-          strokeWeight: 2,
-          scale: 8
-        },
-        zIndex: 1000
-      });
-
-      const radarCircle = new google.maps.Circle({
-        map,
-        center: userLocation,
-        radius: radiusFeet * METERS_PER_FOOT,
-        strokeColor: "#ea384c",
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        fillColor: "#ea384c",
-        fillOpacity: 0.1,
-        zIndex: 500,
-      });
-      
-      const addExamplePlaces = () => {
-        const places = [
-          {
-            position: {
-              lat: location.latitude + 0.001,
-              lng: location.longitude + 0.001
-            },
-            type: 'library' as const
-          },
-          {
-            position: {
-              lat: location.latitude - 0.001,
-              lng: location.longitude + 0.002
-            },
-            type: 'coffee' as const
-          },
-          {
-            position: {
-              lat: location.latitude + 0.002,
-              lng: location.longitude - 0.001
-            },
-            type: 'unknown' as const
-          }
-        ];
-        
-        places.forEach(place => {
-          const markerElement = document.createElement('div');
-          markerElement.className = 'place-marker-container';
-          
-          const customMarker = new google.maps.marker.AdvancedMarkerElement({
-            map,
-            position: place.position,
-            content: markerElement
-          });
-          
-          const root = createRoot(markerElement);
-          root.render(<PlaceMarker type={place.type} />);
-          
-          nearbyMarkers.current.push(customMarker as any);
-        });
-      };
-      
-      map.addListener("dragstart", () => {
-        setMapDragged(true);
-      });
-      
-      map.addListener("idle", () => {
-        if (isAnimating) {
-          setIsAnimating(false);
-        }
-      });
-      
-      googleMapRef.current = map;
-      userMarkerRef.current = userCircleMarker;
-      radiusCircleRef.current = radarCircle;
-      
       try {
-        addExamplePlaces();
+        const userLocation = { lat: location.latitude, lng: location.longitude };
+        
+        const map = new google.maps.Map(mapRef.current!, {
+          center: userLocation,
+          zoom: getZoomFromRadius(radiusFeet),
+          disableDefaultUI: true,
+          styles: darkMapStyles,
+          gestureHandling: "greedy",
+          backgroundColor: '#10141B',
+          maxZoom: ZOOM_MAX,
+          minZoom: ZOOM_MIN,
+          tilt: 0,
+          clickableIcons: false
+        });
+
+        const userCircleMarker = new google.maps.Marker({
+          position: userLocation,
+          map,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor: "#ea384c",
+            fillOpacity: 1,
+            strokeColor: "#ea384c",
+            strokeWeight: 2,
+            scale: 8
+          },
+          zIndex: 1000
+        });
+
+        const radarCircle = new google.maps.Circle({
+          map,
+          center: userLocation,
+          radius: radiusFeet * METERS_PER_FOOT,
+          strokeColor: "#ea384c",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#ea384c",
+          fillOpacity: 0.1,
+          zIndex: 500,
+        });
+        
+        const addExamplePlaces = () => {
+          const places = [
+            {
+              position: {
+                lat: location.latitude + 0.001,
+                lng: location.longitude + 0.001
+              },
+              type: 'library' as const
+            },
+            {
+              position: {
+                lat: location.latitude - 0.001,
+                lng: location.longitude + 0.002
+              },
+              type: 'coffee' as const
+            },
+            {
+              position: {
+                lat: location.latitude + 0.002,
+                lng: location.longitude - 0.001
+              },
+              type: 'unknown' as const
+            }
+          ];
+          
+          places.forEach(place => {
+            const customMarkerDiv = document.createElement("div");
+            const root = createRoot(customMarkerDiv);
+            root.render(<PlaceMarker type={place.type} />);
+            
+            const customMarkerOverlay = new google.maps.OverlayView();
+            
+            customMarkerOverlay.onAdd = function() {
+              const panes = this.getPanes();
+              panes.overlayMouseTarget.appendChild(customMarkerDiv);
+            };
+            
+            customMarkerOverlay.draw = function() {
+              const projection = this.getProjection();
+              if (!projection) return;
+              
+              const position = projection.fromLatLngToDivPixel(
+                new google.maps.LatLng(place.position.lat, place.position.lng)
+              );
+              
+              if (position) {
+                customMarkerDiv.style.position = 'absolute';
+                customMarkerDiv.style.left = (position.x - 12) + 'px';
+                customMarkerDiv.style.top = (position.y - 12) + 'px';
+              }
+            };
+            
+            customMarkerOverlay.setMap(map);
+            
+            const stdMarker = new google.maps.Marker({
+              position: place.position,
+              map,
+              visible: false
+            });
+            
+            nearbyMarkers.current.push(stdMarker);
+          });
+        };
+        
+        map.addListener("dragstart", () => {
+          setMapDragged(true);
+        });
+        
+        map.addListener("idle", () => {
+          if (isAnimating) {
+            setIsAnimating(false);
+          }
+        });
+        
+        googleMapRef.current = map;
+        userMarkerRef.current = userCircleMarker;
+        radiusCircleRef.current = radarCircle;
+        
+        try {
+          addExamplePlaces();
+        } catch (error) {
+          console.error("Failed to add place markers:", error);
+        }
+        
+        setMapLoaded(true);
       } catch (error) {
-        console.error("Failed to add place markers:", error);
+        console.error("Error initializing map:", error);
       }
-      
-      setMapLoaded(true);
     };
     
     initMap();
@@ -231,8 +257,14 @@ const RadarMap: React.FC = () => {
     
     setIsAnimating(true);
     
-    googleMapRef.current.panTo(userLocation);
-    googleMapRef.current.setZoom(getZoomFromRadius(radiusFeet));
+    if (googleMapRef.current.panTo) {
+      googleMapRef.current.panTo(userLocation);
+    }
+    
+    if (googleMapRef.current.setZoom) {
+      const zoomLevel = getZoomFromRadius(radiusFeet);
+      googleMapRef.current.setZoom(zoomLevel);
+    }
     
     setMapDragged(false);
     
@@ -326,7 +358,7 @@ const RadarMap: React.FC = () => {
       </motion.div>
 
       <div className="w-full h-full">
-        <Wrapper apiKey={API_KEY} libraries={["places", "geometry", "marker"]}>
+        <Wrapper apiKey={API_KEY} libraries={["places", "geometry"]}>
           <div className="w-full h-full">
             <div ref={mapRef} className="w-full h-full" />
           </div>
