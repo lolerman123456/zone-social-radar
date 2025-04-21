@@ -40,8 +40,21 @@ const animateMapTo = (
   
   if (zoom !== undefined && startZoom !== targetZoom) {
     setTimeout(() => {
-      map.setZoom(targetZoom);
-    }, 50); // Small delay to allow pan to start first
+      const zoomStep = targetZoom > startZoom ? 0.5 : -0.5;
+      let currentZoom = startZoom;
+      
+      const zoomInterval = setInterval(() => {
+        currentZoom += zoomStep;
+        
+        if ((zoomStep > 0 && currentZoom >= targetZoom) || 
+            (zoomStep < 0 && currentZoom <= targetZoom)) {
+          clearInterval(zoomInterval);
+          map.setZoom(targetZoom);
+        } else {
+          map.setZoom(currentZoom);
+        }
+      }, 50);
+    }, 100);
   }
 };
 
@@ -94,7 +107,6 @@ const RadarMap: React.FC = () => {
         clickableIcons: false
       });
 
-      // Create user marker with a simple red circle
       const userCircleMarker = new google.maps.Marker({
         position: userLocation,
         map,
@@ -109,7 +121,6 @@ const RadarMap: React.FC = () => {
         zIndex: 1000
       });
 
-      // Create radar circle with smooth edge
       const radarCircle = new google.maps.Circle({
         map,
         center: userLocation,
@@ -187,7 +198,7 @@ const RadarMap: React.FC = () => {
     animateMapTo(googleMapRef.current, {
       center: userLocation,
       zoom: getZoomFromRadius(radiusFeet)
-    }, 1200);
+    }, 800);
     
     setMapDragged(false);
     
@@ -195,17 +206,26 @@ const RadarMap: React.FC = () => {
       const originalIcon = userMarkerRef.current.getIcon();
       userMarkerRef.current.setIcon({
         ...(originalIcon as google.maps.Symbol),
-        scale: 16,
+        scale: 12,
       });
       
       setTimeout(() => {
         if (userMarkerRef.current) {
           userMarkerRef.current.setIcon({
             ...(originalIcon as google.maps.Symbol),
-            scale: 14,
+            scale: 10,
           });
+          
+          setTimeout(() => {
+            if (userMarkerRef.current) {
+              userMarkerRef.current.setIcon({
+                ...(originalIcon as google.maps.Symbol),
+                scale: 8,
+              });
+            }
+          }, 200);
         }
-      }, 300);
+      }, 200);
     }
   };
 
