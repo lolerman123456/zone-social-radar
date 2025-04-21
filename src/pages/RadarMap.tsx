@@ -40,20 +40,7 @@ const animateMapTo = (
   
   if (zoom !== undefined && startZoom !== targetZoom) {
     setTimeout(() => {
-      const zoomStep = targetZoom > startZoom ? 0.5 : -0.5;
-      let currentZoom = startZoom;
-      
-      const zoomInterval = setInterval(() => {
-        currentZoom += zoomStep;
-        
-        if ((zoomStep > 0 && currentZoom >= targetZoom) || 
-            (zoomStep < 0 && currentZoom <= targetZoom)) {
-          clearInterval(zoomInterval);
-          map.setZoom(targetZoom);
-        } else {
-          map.setZoom(currentZoom);
-        }
-      }, 50);
+      map.setZoom(targetZoom);
     }, 100);
   }
 };
@@ -133,6 +120,48 @@ const RadarMap: React.FC = () => {
         zIndex: 500,
       });
       
+      const addExamplePlaces = () => {
+        const places = [
+          {
+            position: {
+              lat: location.latitude + 0.001,
+              lng: location.longitude + 0.001
+            },
+            type: 'library' as const
+          },
+          {
+            position: {
+              lat: location.latitude - 0.001,
+              lng: location.longitude + 0.002
+            },
+            type: 'coffee' as const
+          },
+          {
+            position: {
+              lat: location.latitude + 0.002,
+              lng: location.longitude - 0.001
+            },
+            type: 'unknown' as const
+          }
+        ];
+        
+        places.forEach(place => {
+          const markerElement = document.createElement('div');
+          markerElement.className = 'place-marker-container';
+          
+          const customMarker = new google.maps.marker.AdvancedMarkerElement({
+            map,
+            position: place.position,
+            content: markerElement
+          });
+          
+          const root = createRoot(markerElement);
+          root.render(<PlaceMarker type={place.type} />);
+          
+          nearbyMarkers.current.push(customMarker as any);
+        });
+      };
+      
       map.addListener("dragstart", () => {
         setMapDragged(true);
       });
@@ -146,7 +175,13 @@ const RadarMap: React.FC = () => {
       googleMapRef.current = map;
       userMarkerRef.current = userCircleMarker;
       radiusCircleRef.current = radarCircle;
-      nearbyMarkers.current = [];
+      
+      try {
+        addExamplePlaces();
+      } catch (error) {
+        console.error("Failed to add place markers:", error);
+      }
+      
       setMapLoaded(true);
     };
     
@@ -195,10 +230,8 @@ const RadarMap: React.FC = () => {
     
     setIsAnimating(true);
     
-    animateMapTo(googleMapRef.current, {
-      center: userLocation,
-      zoom: getZoomFromRadius(radiusFeet)
-    }, 800);
+    googleMapRef.current.panTo(userLocation);
+    googleMapRef.current.setZoom(getZoomFromRadius(radiusFeet));
     
     setMapDragged(false);
     
@@ -292,7 +325,7 @@ const RadarMap: React.FC = () => {
       </motion.div>
 
       <div className="w-full h-full">
-        <Wrapper apiKey={API_KEY} libraries={["places", "geometry"]}>
+        <Wrapper apiKey={API_KEY} libraries={["places", "geometry", "marker"]}>
           <div className="w-full h-full">
             <div ref={mapRef} className="w-full h-full" />
           </div>

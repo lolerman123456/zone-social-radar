@@ -7,7 +7,13 @@ export const darkMapStyles = [
     ]
   },
   {
-    "elementType": "labels",
+    "elementType": "labels.text",
+    "stylers": [
+      { "visibility": "off" }
+    ]
+  },
+  {
+    "elementType": "labels.icon",
     "stylers": [
       { "visibility": "off" }
     ]
