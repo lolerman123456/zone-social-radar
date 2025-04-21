@@ -13,6 +13,7 @@ import { darkMapStyles } from '@/lib/mapStyles';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import PlaceMarker from '@/components/PlaceMarker';
+import { createRoot } from 'react-dom/client';
 
 const API_KEY = "AIzaSyCjIwAJEFHqjHDOABZzeOQtvVg7F8ESYHI";
 const METERS_PER_FOOT = 0.3048;
