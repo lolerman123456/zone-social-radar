@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Book, Coffee, Question } from 'lucide-react';
+import { Book, Coffee, HelpCircle } from 'lucide-react';
 
 interface PlaceMarkerProps {
   type: 'library' | 'coffee' | 'unknown';
@@ -12,7 +12,7 @@ const PlaceMarker: React.FC<PlaceMarkerProps> = ({ type, className }) => {
   const IconComponent = {
     library: Book,
     coffee: Coffee,
-    unknown: Question
+    unknown: HelpCircle
   }[type];
 
   return (

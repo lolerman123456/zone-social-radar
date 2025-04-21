@@ -12,6 +12,7 @@ import ProfileDrawer from '@/components/ProfileDrawer';
 import { darkMapStyles } from '@/lib/mapStyles';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import PlaceMarker from '@/components/PlaceMarker';
 
 const API_KEY = "AIzaSyCjIwAJEFHqjHDOABZzeOQtvVg7F8ESYHI";
 const METERS_PER_FOOT = 0.3048;
@@ -33,12 +34,15 @@ const animateMapTo = (
   const targetCenter = center || startCenter;
   const targetZoom = zoom !== undefined ? zoom : startZoom;
   
-  map.animateCamera({
-    center: targetCenter,
-    zoom: targetZoom,
-    duration: duration,
-    easing: (x) => 1 - Math.pow(1 - x, 4) // Smoother easing function
-  });
+  if (center) {
+    map.panTo(targetCenter);
+  }
+  
+  if (zoom !== undefined && startZoom !== targetZoom) {
+    setTimeout(() => {
+      map.setZoom(targetZoom);
+    }, 50); // Small delay to allow pan to start first
+  }
 };
 
 const RadarMap: React.FC = () => {
