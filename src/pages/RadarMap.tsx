@@ -28,53 +28,17 @@ const animateMapTo = (
 ) => {
   if (!map) return;
   
-  const startTime = new Date().getTime();
   const startCenter = map.getCenter()?.toJSON();
   const startZoom = map.getZoom();
-  
   const targetCenter = center || startCenter;
   const targetZoom = zoom !== undefined ? zoom : startZoom;
   
-  const deltaLat = targetCenter.lat - startCenter.lat;
-  const deltaLng = targetCenter.lng - startCenter.lng;
-  const deltaZoom = targetZoom - startZoom;
-  
-  const easeOutCubic = (t: number) => {
-    return 1 - Math.pow(1 - t, 3);
-  };
-  
-  if (map.get('animationFrameId')) {
-    cancelAnimationFrame(map.get('animationFrameId') as number);
-  }
-  
-  const animate = () => {
-    const currentTime = new Date().getTime();
-    const elapsed = currentTime - startTime;
-    
-    const progress = Math.min(1, elapsed / duration);
-    const easedProgress = easeOutCubic(progress);
-    
-    if (deltaLat !== 0 || deltaLng !== 0) {
-      map.setCenter({
-        lat: startCenter.lat + deltaLat * easedProgress,
-        lng: startCenter.lng + deltaLng * easedProgress
-      });
-    }
-    
-    if (deltaZoom !== 0) {
-      map.setZoom(startZoom + deltaZoom * easedProgress);
-    }
-    
-    if (progress < 1) {
-      const frameId = requestAnimationFrame(animate);
-      map.set('animationFrameId', frameId);
-    } else {
-      map.set('animationFrameId', null);
-    }
-  };
-  
-  const frameId = requestAnimationFrame(animate);
-  map.set('animationFrameId', frameId);
+  map.animateCamera({
+    center: targetCenter,
+    zoom: targetZoom,
+    duration: duration,
+    easing: (x) => 1 - Math.pow(1 - x, 4) // Smoother easing function
+  });
 };
 
 const RadarMap: React.FC = () => {
@@ -115,7 +79,7 @@ const RadarMap: React.FC = () => {
       
       const map = new google.maps.Map(mapRef.current!, {
         center: userLocation,
-        zoom: 18,
+        zoom: getZoomFromRadius(radiusFeet),
         disableDefaultUI: true,
         styles: darkMapStyles,
         gestureHandling: "greedy",
@@ -125,7 +89,8 @@ const RadarMap: React.FC = () => {
         tilt: 0,
         clickableIcons: false
       });
-      
+
+      // Create user marker with a simple red circle
       const userCircleMarker = new google.maps.Marker({
         position: userLocation,
         map,
@@ -135,20 +100,21 @@ const RadarMap: React.FC = () => {
           fillOpacity: 1,
           strokeColor: "#ea384c",
           strokeWeight: 2,
-          scale: 14
+          scale: 8
         },
         zIndex: 1000
       });
-      
+
+      // Create radar circle with smooth edge
       const radarCircle = new google.maps.Circle({
         map,
         center: userLocation,
         radius: radiusFeet * METERS_PER_FOOT,
         strokeColor: "#ea384c",
-        strokeOpacity: 1,
-        strokeWeight: 3,
-        fillOpacity: 0.10,
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
         fillColor: "#ea384c",
+        fillOpacity: 0.1,
         zIndex: 500,
       });
       

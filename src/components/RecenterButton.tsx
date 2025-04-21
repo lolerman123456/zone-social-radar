@@ -13,17 +13,22 @@ const RecenterButton: React.FC<RecenterButtonProps> = ({ onClick, className }) =
   return (
     <motion.button 
       onClick={onClick}
-      initial={{ scale: 0, opacity: 0 }}
+      initial={{ scale: 0.95, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0, opacity: 0 }}
-      whileTap={{ scale: 0.9 }}
+      exit={{ scale: 0.95, opacity: 0 }}
       whileHover={{ scale: 1.05 }}
-      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ 
+        type: "spring",
+        stiffness: 300,
+        damping: 20,
+        mass: 0.5
+      }}
       className={cn(
         "flex justify-center items-center bg-coral w-14 h-14 rounded-full shadow-lg",
-        "hover:bg-coral-dark transition-all duration-200",
+        "hover:bg-coral-dark transition-colors duration-300",
         "focus:outline-none focus:ring-2 focus:ring-white/20",
-        "mb-4", // Added margin bottom for spacing
+        "backdrop-blur-sm",
         className
       )}
       aria-label="Recenter map"
