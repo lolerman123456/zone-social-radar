@@ -20,13 +20,13 @@ const RecenterButton: React.FC<RecenterButtonProps> = ({ onClick, className }) =
       whileTap={{ scale: 0.95 }}
       transition={{ 
         type: "spring",
-        stiffness: 300,
-        damping: 20,
-        mass: 0.5
+        stiffness: 400,
+        damping: 15,
+        mass: 0.4
       }}
       className={cn(
         "flex justify-center items-center bg-coral w-14 h-14 rounded-full shadow-lg",
-        "hover:bg-coral-dark transition-colors duration-300",
+        "hover:bg-coral-dark transition-colors duration-200",
         "focus:outline-none focus:ring-2 focus:ring-white/20",
         "backdrop-blur-sm",
         className

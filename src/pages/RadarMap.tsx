@@ -26,7 +26,7 @@ const RADIUS_MAX = 150;
 const animateMapTo = (
   map: google.maps.Map, 
   { center, zoom }: { center?: google.maps.LatLngLiteral, zoom?: number },
-  duration = 1000
+  duration = 500
 ) => {
   if (!map) return;
   
@@ -40,9 +40,7 @@ const animateMapTo = (
   }
   
   if (zoom !== undefined && startZoom !== targetZoom) {
-    setTimeout(() => {
-      map.setZoom(targetZoom);
-    }, 100);
+    map.setZoom(targetZoom);
   }
 };
 
@@ -226,7 +224,7 @@ const RadarMap: React.FC = () => {
     if (!mapDragged) {
       const zoomLevel = getZoomFromRadius(radiusFeet);
       setIsAnimating(true);
-      animateMapTo(googleMapRef.current, { center: userLocation, zoom: zoomLevel }, 900);
+      animateMapTo(googleMapRef.current, { center: userLocation, zoom: zoomLevel }, 300);
     }
   }, [location, mapDragged, radiusFeet]);
 
@@ -257,14 +255,10 @@ const RadarMap: React.FC = () => {
     
     setIsAnimating(true);
     
-    if (googleMapRef.current.panTo) {
-      googleMapRef.current.panTo(userLocation);
-    }
-    
-    if (googleMapRef.current.setZoom) {
-      const zoomLevel = getZoomFromRadius(radiusFeet);
-      googleMapRef.current.setZoom(zoomLevel);
-    }
+    animateMapTo(googleMapRef.current, { 
+      center: userLocation,
+      zoom: getZoomFromRadius(radiusFeet)
+    }, 300);
     
     setMapDragged(false);
     
@@ -289,9 +283,9 @@ const RadarMap: React.FC = () => {
                 scale: 8,
               });
             }
-          }, 200);
+          }, 100);
         }
-      }, 200);
+      }, 100);
     }
   };
 
@@ -321,7 +315,7 @@ const RadarMap: React.FC = () => {
     if (googleMapRef.current && location) {
       const zoomLevel = getZoomFromRadius(val);
       setIsAnimating(true);
-      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 800);
+      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 300);
     }
   };
 
