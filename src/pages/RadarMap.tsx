@@ -1,3 +1,4 @@
+import { getDatabase, ref, onValue } from "firebase/database";
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -59,7 +60,7 @@ const RadarMap: React.FC = () => {
   const [showProfileDrawer, setShowProfileDrawer] = useState(false);
   const [mapDragged, setMapDragged] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  
+  const [otherUsers, setOtherUsers] = useState<any[]>([]);
   const { 
     location, 
     error: locationError, 
