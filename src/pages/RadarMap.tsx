@@ -71,7 +71,31 @@ const RadarMap: React.FC = () => {
     timeout: 10000,
     maximumAge: 0
   });
+const auth = getAuth();
+const db = getDatabase();
 
+function updateLocation(lat: number, lng: number) {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const userRef = ref(db, `users/${user.uid}`);
+  set(userRef, {
+    uid: user.uid,
+    lat,
+    lng,
+    ghostMode: false,
+    updatedAt: Date.now(),
+    socials: {
+      instagram: '@placeholder'
+    }
+  });
+}
+
+useEffect(() => {
+  if (location) {
+    updateLocation(location.lat, location.lng);
+  }
+}, [location]);
   const showLocationModal = !location && (permissionState === 'prompt' || permissionDenied);
 
   useEffect(() => {
