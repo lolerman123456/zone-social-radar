@@ -1,5 +1,7 @@
+
 import { getDatabase, ref, onValue, set, off } from "firebase/database";
 import { getAuth } from "firebase/auth";
+import { DataSnapshot } from "firebase/database";
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -97,15 +99,15 @@ const RadarMap: React.FC = () => {
     return () => off(usersRef, "value", handleData);
   }, []);
 
-  function updateLocation(lat: number, lng: number) {
+  function updateLocation(latitude: number, longitude: number) {
     const user = auth.currentUser;
     if (!user) return;
 
     const userRef = ref(db, `users/${user.uid}`);
     set(userRef, {
       uid: user.uid,
-      lat,
-      lng,
+      lat: latitude,
+      lng: longitude,
       ghostMode: false,
       updatedAt: Date.now(),
       socials: {
@@ -116,7 +118,7 @@ const RadarMap: React.FC = () => {
 
   useEffect(() => {
     if (location) {
-      updateLocation(location.lat, location.lng);
+      updateLocation(location.latitude, location.longitude);
     }
   }, [location]);
 
