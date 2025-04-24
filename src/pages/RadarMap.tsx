@@ -74,7 +74,26 @@ const RadarMap: React.FC = () => {
   });
 const auth = getAuth();
 const db = getDatabase();
+useEffect(() => {
+  const db = getDatabase();
+  const usersRef = ref(db, "users");
 
+  const handleData = (snapshot: DataSnapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      const usersArray = Object.entries(data)
+        .map(([uid, userData]: any) => ({
+          uid,
+          ...userData,
+        }))
+        .filter((u) => u.uid !== auth.currentUser?.uid); // Exclude current user
+      setOtherUsers(usersArray);
+    }
+  };
+
+  onValue(usersRef, handleData);
+  return () => off(usersRef, "value", handleData);
+}, []);
 function updateLocation(lat: number, lng: number) {
   const user = auth.currentUser;
   if (!user) return;
