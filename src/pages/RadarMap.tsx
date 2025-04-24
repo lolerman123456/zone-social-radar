@@ -1,4 +1,5 @@
-import { getDatabase, ref, onValue } from "firebase/database";
+import { getDatabase, ref, onValue, set, off } from "firebase/database";
+import { getAuth } from "firebase/auth";
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -72,50 +73,53 @@ const RadarMap: React.FC = () => {
     timeout: 10000,
     maximumAge: 0
   });
-const auth = getAuth();
-const db = getDatabase();
-useEffect(() => {
+
+  const auth = getAuth();
   const db = getDatabase();
-  const usersRef = ref(db, "users");
+  
+  useEffect(() => {
+    const usersRef = ref(db, "users");
 
-  const handleData = (snapshot: DataSnapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      const usersArray = Object.entries(data)
-        .map(([uid, userData]: any) => ({
-          uid,
-          ...userData,
-        }))
-        .filter((u) => u.uid !== auth.currentUser?.uid); // Exclude current user
-      setOtherUsers(usersArray);
-    }
-  };
+    const handleData = (snapshot: DataSnapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const usersArray = Object.entries(data)
+          .map(([uid, userData]: any) => ({
+            uid,
+            ...userData,
+          }))
+          .filter((u) => u.uid !== auth.currentUser?.uid); // Exclude current user
+        setOtherUsers(usersArray);
+      }
+    };
 
-  onValue(usersRef, handleData);
-  return () => off(usersRef, "value", handleData);
-}, []);
-function updateLocation(lat: number, lng: number) {
-  const user = auth.currentUser;
-  if (!user) return;
+    onValue(usersRef, handleData);
+    return () => off(usersRef, "value", handleData);
+  }, []);
 
-  const userRef = ref(db, `users/${user.uid}`);
-  set(userRef, {
-    uid: user.uid,
-    lat,
-    lng,
-    ghostMode: false,
-    updatedAt: Date.now(),
-    socials: {
-      instagram: '@placeholder'
-    }
-  });
-}
+  function updateLocation(lat: number, lng: number) {
+    const user = auth.currentUser;
+    if (!user) return;
 
-useEffect(() => {
-  if (location) {
-    updateLocation(location.lat, location.lng);
+    const userRef = ref(db, `users/${user.uid}`);
+    set(userRef, {
+      uid: user.uid,
+      lat,
+      lng,
+      ghostMode: false,
+      updatedAt: Date.now(),
+      socials: {
+        instagram: '@placeholder'
+      }
+    });
   }
-}, [location]);
+
+  useEffect(() => {
+    if (location) {
+      updateLocation(location.lat, location.lng);
+    }
+  }, [location]);
+
   const showLocationModal = !location && (permissionState === 'prompt' || permissionDenied);
 
   useEffect(() => {
