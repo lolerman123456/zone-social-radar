@@ -2,7 +2,8 @@
 import { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-
+import { getAuth } from "firebase/auth";
+import { getDatabase, ref, set, onValue } from "firebase/database";
 const Index = () => {
   const { user, loading } = useAuth();
 
