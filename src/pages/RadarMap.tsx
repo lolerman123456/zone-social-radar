@@ -1,3 +1,4 @@
+
 import { getDatabase, ref, onValue, set, off } from "firebase/database";
 import { getAuth } from "firebase/auth";
 import { DataSnapshot } from "firebase/database";
@@ -326,7 +327,21 @@ const RadarMap: React.FC = () => {
     if (!user) return;
 
     try {
-      console.log("Profile update data:", data);
+      const userRef = ref(db, `users/${user.uid}`);
+      await set(userRef, {
+        uid: user.uid,
+        lat: location?.latitude || 0,
+        lng: location?.longitude || 0,
+        ghostMode,
+        updatedAt: Date.now(),
+        socials: {
+          instagram: data.instagram || '',
+          snapchat: data.snapchat || '',
+          tiktok: data.tiktok || '',
+        },
+        name: data.name || '',
+      });
+
       toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
