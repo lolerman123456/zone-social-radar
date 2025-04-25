@@ -1,4 +1,3 @@
-
 import { getDatabase, ref, onValue, set, off } from "firebase/database";
 import { getAuth } from "firebase/auth";
 import { DataSnapshot } from "firebase/database";
@@ -88,12 +87,12 @@ const RadarMap: React.FC = () => {
             uid,
             ...userData,
           }))
-          .filter((u) =>
-            u.uid !== auth.currentUser?.uid &&
-            !u.ghostMode &&
-            u.lat &&
-            u.lng
-          );
+          .filter((u) => {
+            if (u.uid === auth.currentUser?.uid) return false;
+            const freshness = 60 * 1000; // 60 seconds
+            const isFresh = Date.now() - u.updatedAt < freshness;
+            return isFresh;
+          });
         setOtherUsers(usersArray);
       }
     };
