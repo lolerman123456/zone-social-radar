@@ -1,10 +1,7 @@
 
 import React, { useRef, useEffect } from 'react';
-import { Wrapper } from "@googlemaps/react-wrapper";
 import { darkMapStyles } from '@/lib/mapStyles';
-import { createRoot } from 'react-dom/client';
 
-const API_KEY = "AIzaSyCjIwAJEFHqjHDOABZzeOQtvVg7F8ESYHI";
 const ZOOM_MIN = 15;
 const ZOOM_MAX = 20;
 const METERS_PER_FOOT = 0.3048;
@@ -136,11 +133,7 @@ const Map: React.FC<MapProps> = ({
 
   return (
     <div className="w-full h-full">
-      <Wrapper apiKey={API_KEY} libraries={["places", "geometry"]}>
-        <div className="w-full h-full">
-          <div ref={mapRef} className="w-full h-full" />
-        </div>
-      </Wrapper>
+      <div ref={mapRef} className="w-full h-full" />
     </div>
   );
 };
