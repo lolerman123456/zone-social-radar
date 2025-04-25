@@ -1,4 +1,3 @@
-
 import { getDatabase, ref, onValue, set, off } from "firebase/database";
 import { getAuth } from "firebase/auth";
 import { DataSnapshot } from "firebase/database";
@@ -78,7 +77,7 @@ const RadarMap: React.FC = () => {
 
   const auth = getAuth();
   const db = getDatabase();
-  
+
   useEffect(() => {
     const usersRef = ref(db, "users");
 
@@ -120,281 +119,238 @@ const RadarMap: React.FC = () => {
     if (location) {
       updateLocation(location.latitude, location.longitude);
     }
-  }, [location]);
+  }, [location]);  updateLocation(location.latitude, location.longitude);
+  }
+}, [location]);
 
-  const showLocationModal = !location && (permissionState === 'prompt' || permissionDenied);
+const showLocationModal = !location && (permissionState === 'prompt' || permissionDenied);
 
-  useEffect(() => {
-    if (!location || !mapRef.current || mapLoaded) return;
-    
-    const initMap = () => {
-      try {
-        const userLocation = { lat: location.latitude, lng: location.longitude };
-        
-        const map = new google.maps.Map(mapRef.current!, {
-          center: userLocation,
-          zoom: getZoomFromRadius(radiusFeet),
-          disableDefaultUI: true,
-          styles: darkMapStyles,
-          gestureHandling: "greedy",
-          backgroundColor: '#10141B',
-          maxZoom: ZOOM_MAX,
-          minZoom: ZOOM_MIN,
-          tilt: 0,
-          clickableIcons: false
-        });
+useEffect(() => {
+  if (!location || !mapRef.current || mapLoaded) return;
 
-        const userCircleMarker = new google.maps.Marker({
-          position: userLocation,
-          map,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: "#ea384c",
-            fillOpacity: 1,
-            strokeColor: "#ea384c",
-            strokeWeight: 2,
-            scale: 8
-          },
-          zIndex: 1000
-        });
-
-        const radarCircle = new google.maps.Circle({
-          map,
-          center: userLocation,
-          radius: radiusFeet * METERS_PER_FOOT,
-          strokeColor: "#ea384c",
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: "#ea384c",
-          fillOpacity: 0.1,
-          zIndex: 500,
-        });
-        
-        const addExamplePlaces = () => {
-          const places = [
-            {
-              position: {
-                lat: location.latitude + 0.001,
-                lng: location.longitude + 0.001
-              },
-              type: 'library' as const
-            },
-            {
-              position: {
-                lat: location.latitude - 0.001,
-                lng: location.longitude + 0.002
-              },
-              type: 'coffee' as const
-            },
-            {
-              position: {
-                lat: location.latitude + 0.002,
-                lng: location.longitude - 0.001
-              },
-              type: 'unknown' as const
-            }
-          ];
-          
-          places.forEach(place => {
-            const customMarkerDiv = document.createElement("div");
-            const root = createRoot(customMarkerDiv);
-            root.render(<PlaceMarker type={place.type} />);
-            
-            const customMarkerOverlay = new google.maps.OverlayView();
-            
-            customMarkerOverlay.onAdd = function() {
-              const panes = this.getPanes();
-              panes.overlayMouseTarget.appendChild(customMarkerDiv);
-            };
-            
-            customMarkerOverlay.draw = function() {
-              const projection = this.getProjection();
-              if (!projection) return;
-              
-              const position = projection.fromLatLngToDivPixel(
-                new google.maps.LatLng(place.position.lat, place.position.lng)
-              );
-              
-              if (position) {
-                customMarkerDiv.style.position = 'absolute';
-                customMarkerDiv.style.left = (position.x - 12) + 'px';
-                customMarkerDiv.style.top = (position.y - 12) + 'px';
-              }
-            };
-            
-            customMarkerOverlay.setMap(map);
-            
-            const stdMarker = new google.maps.Marker({
-              position: place.position,
-              map,
-              visible: false
-            });
-            
-            nearbyMarkers.current.push(stdMarker);
-          });
-        };
-        
-        map.addListener("dragstart", () => {
-          setMapDragged(true);
-        });
-        
-        map.addListener("idle", () => {
-          if (isAnimating) {
-            setIsAnimating(false);
-          }
-        });
-        
-        googleMapRef.current = map;
-        userMarkerRef.current = userCircleMarker;
-        radiusCircleRef.current = radarCircle;
-        
-        try {
-          addExamplePlaces();
-        } catch (error) {
-          console.error("Failed to add place markers:", error);
-        }
-        
-        setMapLoaded(true);
-      } catch (error) {
-        console.error("Error initializing map:", error);
-      }
-    };
-    
-    initMap();
-  }, [location, mapLoaded, radiusFeet, isAnimating]);
-
-  useEffect(() => {
-    if (!location || !googleMapRef.current || !userMarkerRef.current || !radiusCircleRef.current) return;
-    
-    const userLocation = { lat: location.latitude, lng: location.longitude };
-    
-    userMarkerRef.current.setPosition(userLocation);
-    radiusCircleRef.current.setCenter(userLocation);
-    
-    if (!mapDragged) {
-      const zoomLevel = getZoomFromRadius(radiusFeet);
-      setIsAnimating(true);
-      animateMapTo(googleMapRef.current, { center: userLocation, zoom: zoomLevel }, 300);
-    }
-  }, [location, mapDragged, radiusFeet]);
-
-  useEffect(() => {
-    if (!radiusCircleRef.current) return;
-    
-    const newRadiusMeters = radiusFeet * METERS_PER_FOOT;
-    radiusCircleRef.current.setRadius(newRadiusMeters);
-    setRadiusMeters(newRadiusMeters);
-  }, [radiusFeet]);
-
-  useEffect(() => {
-    nearbyMarkers.current.forEach(marker => {
-      marker.setVisible(!ghostMode);
-    });
-  }, [ghostMode]);
-
-  useEffect(() => {
-    if (!permissionState) {
-      requestPermission();
-    }
-  }, [permissionState, requestPermission]);
-
-  const handleRecenter = () => {
-    if (!googleMapRef.current || !location) return;
-    
-    const userLocation = { lat: location.latitude, lng: location.longitude };
-    
-    setIsAnimating(true);
-    
-    animateMapTo(googleMapRef.current, { 
-      center: userLocation,
-      zoom: getZoomFromRadius(radiusFeet)
-    }, 300);
-    
-    setMapDragged(false);
-    
-    if (userMarkerRef.current) {
-      const originalIcon = userMarkerRef.current.getIcon();
-      userMarkerRef.current.setIcon({
-        ...(originalIcon as google.maps.Symbol),
-        scale: 12,
-      });
-      
-      setTimeout(() => {
-        if (userMarkerRef.current) {
-          userMarkerRef.current.setIcon({
-            ...(originalIcon as google.maps.Symbol),
-            scale: 10,
-          });
-          
-          setTimeout(() => {
-            if (userMarkerRef.current) {
-              userMarkerRef.current.setIcon({
-                ...(originalIcon as google.maps.Symbol),
-                scale: 8,
-              });
-            }
-          }, 100);
-        }
-      }, 100);
-    }
-  };
-
-  const getZoomFromRadius = (feet: number) => {
-    const meters = feet * METERS_PER_FOOT;
-    const baseZoom = 20;
-    return Math.max(
-      ZOOM_MIN,
-      Math.min(
-        ZOOM_MAX,
-        baseZoom - Math.log2(meters / 15)
-      )
-    );
-  };
-
-  const handleRadiusChange = (val: number) => {
-    setRadiusFeet(val);
-
-    if (googleMapRef.current && location) {
-      const zoomLevel = getZoomFromRadius(val);
-      setIsAnimating(true);
-      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 300);
-    }
-  };
-
-  const handleRadiusChangeComplete = (val: number) => {
-    if (googleMapRef.current && location) {
-      const zoomLevel = getZoomFromRadius(val);
-      setIsAnimating(true);
-      animateMapTo(googleMapRef.current, { zoom: zoomLevel }, 300);
-    }
-  };
-
-  const handleGhostModeChange = (enabled: boolean) => {
-    setGhostMode(enabled);
-    if (enabled) {
-      toast.success("Ghost mode enabled");
-    } else {
-      toast.success("Ghost mode disabled");
-    }
-  };
-
-  const handleUpdateProfile = async (data: any) => {
-    if (!user) return;
-    
+  const initMap = () => {
     try {
-      console.log("Profile update data:", data);
-      toast.success("Profile updated successfully");
+      const userLocation = { lat: location.latitude, lng: location.longitude };
+
+      const map = new google.maps.Map(mapRef.current!, {
+        center: userLocation,
+        zoom: getZoomFromRadius(radiusFeet),
+        disableDefaultUI: true,
+        styles: darkMapStyles,
+        gestureHandling: "greedy",
+        backgroundColor: '#10141B',
+        maxZoom: ZOOM_MAX,
+        minZoom: ZOOM_MIN,
+        tilt: 0,
+        clickableIcons: false
+      });
+
+      const userCircleMarker = new google.maps.Marker({
+        position: userLocation,
+        map,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: "#ea384c",
+          fillOpacity: 1,
+          strokeColor: "#ea384c",
+          strokeWeight: 2,
+          scale: 8
+        },
+        zIndex: 1000
+      });
+
+      const radarCircle = new google.maps.Circle({
+        map,
+        center: userLocation,
+        radius: radiusFeet * METERS_PER_FOOT,
+        strokeColor: "#ea384c",
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: "#ea384c",
+        fillOpacity: 0.1,
+        zIndex: 500,
+      });
+
+      const addExamplePlaces = () => {
+        const places = [
+          {
+            position: {
+              lat: location.latitude + 0.001,
+              lng: location.longitude + 0.001
+            },
+            type: 'library' as const
+          },
+          {
+            position: {
+              lat: location.latitude - 0.001,
+              lng: location.longitude + 0.002
+            },
+            type: 'coffee' as const
+          },
+          {
+            position: {
+              lat: location.latitude + 0.002,
+              lng: location.longitude - 0.001
+            },
+            type: 'unknown' as const
+          }
+        ];
+
+        places.forEach(place => {
+          const customMarkerDiv = document.createElement("div");
+          const root = createRoot(customMarkerDiv);
+          root.render(<PlaceMarker type={place.type} />);
+
+          const customMarkerOverlay = new google.maps.OverlayView();
+
+          customMarkerOverlay.onAdd = function() {
+            const panes = this.getPanes();
+            panes.overlayMouseTarget.appendChild(customMarkerDiv);
+          };
+
+          customMarkerOverlay.draw = function() {
+            const projection = this.getProjection();
+            if (!projection) return;
+
+            const position = projection.fromLatLngToDivPixel(
+              new google.maps.LatLng(place.position.lat, place.position.lng)
+            );
+
+            if (position) {
+              customMarkerDiv.style.position = 'absolute';
+              customMarkerDiv.style.left = (position.x - 12) + 'px';
+              customMarkerDiv.style.top = (position.y - 12) + 'px';
+            }
+          };
+
+          customMarkerOverlay.setMap(map);
+
+          const stdMarker = new google.maps.Marker({
+            position: place.position,
+            map,
+            visible: false
+          });
+
+          nearbyMarkers.current.push(stdMarker);
+        });
+      };
+
+      map.addListener("dragstart", () => {
+        setMapDragged(true);
+      });
+
+      map.addListener("idle", () => {
+        if (isAnimating) {
+          setIsAnimating(false);
+        }
+      });
+
+      googleMapRef.current = map;
+      userMarkerRef.current = userCircleMarker;
+      radiusCircleRef.current = radarCircle;      radiusCircleRef.current = radarCircle;
+
+      try {
+        addExamplePlaces();
+      } catch (error) {
+        console.error("Failed to add place markers:", error);
+      }
+
+      setMapLoaded(true);
     } catch (error) {
-      console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
+      console.error("Error initializing map:", error);
     }
   };
 
-  return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#10141B]">
-      <motion.div 
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
+  initMap();
+}, [location, mapLoaded, radiusFeet, isAnimating]);
+
+useEffect(() => {
+  if (!location || !googleMapRef.current || !userMarkerRef.current || !radiusCircleRef.current) return;
+
+  const userLocation = { lat: location.latitude, lng: location.longitude };
+
+  userMarkerRef.current.setPosition(userLocation);
+  radiusCircleRef.current.setCenter(userLocation);
+
+  if (!mapDragged) {
+    const zoomLevel = getZoomFromRadius(radiusFeet);
+    setIsAnimating(true);
+    animateMapTo(googleMapRef.current, { center: userLocation, zoom: zoomLevel }, 300);
+  }
+}, [location, mapDragged, radiusFeet]);
+
+useEffect(() => {
+  if (!radiusCircleRef.current) return;
+
+  const newRadiusMeters = radiusFeet * METERS_PER_FOOT;
+  radiusCircleRef.current.setRadius(newRadiusMeters);
+  setRadiusMeters(newRadiusMeters);
+}, [radiusFeet]);
+
+useEffect(() => {
+  nearbyMarkers.current.forEach(marker => {
+    marker.setVisible(!ghostMode);
+  });
+}, [ghostMode]);
+
+useEffect(() => {
+  if (!permissionState) {
+    requestPermission();
+  }
+}, [permissionState, requestPermission]);
+
+const handleRecenter = () => {
+  if (!googleMapRef.current || !location) return;
+
+  const userLocation = { lat: location.latitude, lng: location.longitude };
+
+  setIsAnimating(true);
+
+  animateMapTo(googleMapRef.current, {
+    center: userLocation,
+    zoom: getZoomFromRadius(radiusFeet)
+  }, 300);
+
+  setMapDragged(false);
+
+  if (userMarkerRef.current) {
+    const originalIcon = userMarkerRef.current.getIcon();
+    userMarkerRef.current.setIcon({
+      ...(originalIcon as google.maps.Symbol),
+      scale: 12,
+    });
+
+    setTimeout(() => {
+      if (userMarkerRef.current) {
+        userMarkerRef.current.setIcon({
+          ...(originalIcon as google.maps.Symbol),
+          scale: 10,
+        });
+
+        setTimeout(() => {
+          if (userMarkerRef.current) {
+            userMarkerRef.current.setIcon({
+              ...(originalIcon as google.maps.Symbol),
+              scale: 8,
+            });
+          }
+        }, 100);
+      }
+    }, 100);
+  }
+};
+
+const getZoomFromRadius = (feet: number) => {
+  const meters = feet * METERS_PER_FOOT;
+  const baseZoom = 20;
+  return Math.max(
+    ZOOM_MIN,
+    Math.min(
+      ZOOM_MAX,
+      baseZoom - Math.log2(meters / 15)
+    )
+  );
+};      animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.5 }}
         className="absolute top-0 left-0 right-0 z-10 flex items-center px-4 py-3 glass-panel"
       >
