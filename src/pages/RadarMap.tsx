@@ -1,3 +1,4 @@
+
 import { getDatabase, ref, onValue, set, off } from "firebase/database";
 import { getAuth } from "firebase/auth";
 import { DataSnapshot } from "firebase/database";
@@ -119,9 +120,7 @@ const RadarMap: React.FC = () => {
     if (location) {
       updateLocation(location.latitude, location.longitude);
     }
-  }, [location]);  updateLocation(location.latitude, location.longitude);
-  }
-}, [location]);
+  }, [location]);
 
 const showLocationModal = !location && (permissionState === 'prompt' || permissionDenied);
 
@@ -247,7 +246,7 @@ useEffect(() => {
 
       googleMapRef.current = map;
       userMarkerRef.current = userCircleMarker;
-      radiusCircleRef.current = radarCircle;      radiusCircleRef.current = radarCircle;
+      radiusCircleRef.current = radarCircle;      
 
       try {
         addExamplePlaces();
@@ -350,107 +349,133 @@ const getZoomFromRadius = (feet: number) => {
       baseZoom - Math.log2(meters / 15)
     )
   );
-};      animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-        className="absolute top-0 left-0 right-0 z-10 flex items-center px-4 py-3 glass-panel"
-      >
-        <h1 className="text-2xl font-outfit font-bold text-white">Zoned</h1>
-      </motion.div>
+};
 
-      <div className="w-full h-full">
-        <Wrapper apiKey={API_KEY} libraries={["places", "geometry"]}>
-          <div className="w-full h-full">
-            <div ref={mapRef} className="w-full h-full" />
-          </div>
-        </Wrapper>
-        
-        {!location && !locationError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
-            <div className="flex flex-col items-center">
-              <motion.div 
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ repeat: Infinity, duration: 1.5 }}
-                className="h-16 w-16 bg-coral rounded-full flex items-center justify-center mb-4"
-              >
-                <div className="h-10 w-10 bg-black rounded-full"></div>
-              </motion.div>
-              <p className="text-white text-lg">Loading your location...</p>
-            </div>
-          </div>
-        )}
-        
-        <motion.div 
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="absolute bottom-36 left-0 right-0 px-6 z-10"
-        >
-          <RadiusSlider 
-            value={radiusFeet}
-            min={RADIUS_MIN}
-            max={RADIUS_MAX}
-            onChange={handleRadiusChange}
-            onChangeComplete={handleRadiusChangeComplete}
-          />
-        </motion.div>
-        
-        <motion.div 
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-          className="absolute bottom-10 left-0 right-0 flex justify-between items-center px-6 z-10"
-        >
-          <div className="w-[45%]">
-            <GhostModeToggle 
-              enabled={ghostMode} 
-              onChange={handleGhostModeChange} 
-              className="bg-black/40 backdrop-blur-sm p-3 rounded-full" 
-            />
-          </div>
-          
-          <motion.div
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: 1.05 }}
-            className="w-[45%]"
-          >
-            <Button 
-              onClick={() => setShowProfileDrawer(true)}
-              className="w-full bg-coral hover:bg-coral-dark text-white rounded-full py-6"
+const handleRadiusChange = (value: number) => {
+  setRadiusFeet(value);
+};
+
+const handleRadiusChangeComplete = (value: number) => {
+  if (!googleMapRef.current) return;
+  
+  const zoom = getZoomFromRadius(value);
+  googleMapRef.current.setZoom(zoom);
+};
+
+const handleGhostModeChange = (enabled: boolean) => {
+  setGhostMode(enabled);
+};
+
+const handleUpdateProfile = (data: any) => {
+  console.log("Profile updated:", data);
+  // Implement profile update logic
+};
+
+return (
+  <div className="bg-black min-h-screen relative">
+    <motion.div
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.2, duration: 0.5 }}
+      className="absolute top-0 left-0 right-0 z-10 flex items-center px-4 py-3 glass-panel"
+    >
+      <h1 className="text-2xl font-outfit font-bold text-white">Zoned</h1>
+    </motion.div>
+
+    <div className="w-full h-full">
+      <Wrapper apiKey={API_KEY} libraries={["places", "geometry"]}>
+        <div className="w-full h-full">
+          <div ref={mapRef} className="w-full h-full" />
+        </div>
+      </Wrapper>
+      
+      {!location && !locationError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
+          <div className="flex flex-col items-center">
+            <motion.div 
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+              className="h-16 w-16 bg-coral rounded-full flex items-center justify-center mb-4"
             >
-              Profile
-            </Button>
-          </motion.div>
-        </motion.div>
+              <div className="h-10 w-10 bg-black rounded-full"></div>
+            </motion.div>
+            <p className="text-white text-lg">Loading your location...</p>
+          </div>
+        </div>
+      )}
+      
+      <motion.div 
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.4, duration: 0.5 }}
+        className="absolute bottom-36 left-0 right-0 px-6 z-10"
+      >
+        <RadiusSlider 
+          value={radiusFeet}
+          min={RADIUS_MIN}
+          max={RADIUS_MAX}
+          onChange={handleRadiusChange}
+          onChangeComplete={handleRadiusChangeComplete}
+        />
+      </motion.div>
+      
+      <motion.div 
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5, duration: 0.5 }}
+        className="absolute bottom-10 left-0 right-0 flex justify-between items-center px-6 z-10"
+      >
+        <div className="w-[45%]">
+          <GhostModeToggle 
+            enabled={ghostMode} 
+            onChange={handleGhostModeChange} 
+            className="bg-black/40 backdrop-blur-sm p-3 rounded-full" 
+          />
+        </div>
         
-        <AnimatePresence>
-          {mapDragged && (
-            <RecenterButton 
-              onClick={handleRecenter} 
-              className="absolute bottom-60 right-6 z-10"
-            />
-          )}
-        </AnimatePresence>
-      </div>
+        <motion.div
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.05 }}
+          className="w-[45%]"
+        >
+          <Button 
+            onClick={() => setShowProfileDrawer(true)}
+            className="w-full bg-coral hover:bg-coral-dark text-white rounded-full py-6"
+          >
+            Profile
+          </Button>
+        </motion.div>
+      </motion.div>
       
-      <LocationPermissionModal 
-        isOpen={showLocationModal}
-        onRequestPermission={requestPermission}
-        permissionDenied={permissionDenied}
-      />
-      
-      <ProfileDrawer 
-        open={showProfileDrawer}
-        onOpenChange={setShowProfileDrawer}
-        user={user}
-        ghostMode={ghostMode}
-        onGhostModeChange={handleGhostMode => {
-          setGhostMode(handleGhostMode);
-          setShowProfileDrawer(false);
-        }}
-        onUpdateProfile={handleUpdateProfile}
-      />
+      <AnimatePresence>
+        {mapDragged && (
+          <RecenterButton 
+            onClick={handleRecenter} 
+            className="absolute bottom-60 right-6 z-10"
+          />
+        )}
+      </AnimatePresence>
     </div>
-  );
+    
+    <LocationPermissionModal 
+      isOpen={showLocationModal}
+      onRequestPermission={requestPermission}
+      permissionDenied={permissionDenied}
+    />
+    
+    <ProfileDrawer 
+      open={showProfileDrawer}
+      onOpenChange={setShowProfileDrawer}
+      user={user}
+      ghostMode={ghostMode}
+      onGhostModeChange={handleGhostMode => {
+        setGhostMode(handleGhostMode);
+        setShowProfileDrawer(false);
+      }}
+      onUpdateProfile={handleUpdateProfile}
+    />
+  </div>
+);
 };
 
 export default RadarMap;
