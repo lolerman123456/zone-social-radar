@@ -1,184 +1,126 @@
+import React, { useState, useEffect } from "react";
+import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
+import { onValue, ref } from "firebase/database";
+import { database } from "../lib/firebase";
 
-import React, { useState, useEffect } from 'react';
-import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '@/hooks/useAuth';
-import useLocation from '@/hooks/useLocation';
-import { useNearbyUsers } from '@/hooks/useNearbyUsers';
-import { useLocationUpdater } from '@/hooks/useLocationUpdater';
-import LocationPermissionModal from '@/components/LocationPermissionModal';
-import ProfileDrawer from '@/components/ProfileDrawer';
-import Map from '@/components/Map';
-import MapControls from '@/components/MapControls';
-import RecenterButton from '@/components/RecenterButton';
-import { getDatabase, ref, update } from "firebase/database";
-
-const RADIUS_MIN = 20;
-const RADIUS_MAX = 150;
-
-const RadarMap: React.FC = () => {
-  const { user } = useAuth();
-  const [radiusFeet, setRadiusFeet] = useState(RADIUS_MIN);
-  const [ghostMode, setGhostMode] = useState(false);
-  const [showProfileDrawer, setShowProfileDrawer] = useState(false);
-  const [mapDragged, setMapDragged] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  const {
-    location,
-    error: locationError,
-    requestPermission,
-    permissionState,
-    permissionDenied
-  } = useLocation({
-    enableHighAccuracy: true,
-    timeout: 10000,
-    maximumAge: 0
-  });
-
-  const { otherUsers, loading: usersLoading } = useNearbyUsers();
-  useLocationUpdater(location, ghostMode);
-  
-  useEffect(() => {
-    if (otherUsers.length > 0) {
-      toast.info(`${otherUsers.length} user${otherUsers.length === 1 ? '' : 's'} nearby`);
-    }
-  }, [otherUsers.length]);
-  
-  const handleUpdateProfile = async (data: any) => {
-    if (!user) return;
-
-    try {
-      const userRef = ref(getDatabase(), `users/${user.uid}`);
-      await update(userRef, {
-        socials: {
-          instagram: data.instagram || '',
-          snapchat: data.snapchat || '',
-          tiktok: data.tiktok || '',
-        },
-        name: data.name || '',
-      });
-
-      toast.success("Profile updated successfully");
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
-    }
-  };
-
-  const handleRecenter = () => {
-    setMapDragged(false);
-    setIsAnimating(true);
-  };
-
-  const handleGhostModeChange = async (enabled: boolean) => {
-    // Update local state
-    setGhostMode(enabled);
-    
-    // Update in database - immediately make user disappear/reappear
-    if (user && location) {
-      try {
-        const userRef = ref(getDatabase(), `users/${user.uid}`);
-        if (enabled) {
-          // In ghost mode - remove location data to make user invisible
-          await update(userRef, {
-            ghostMode: true,
-            updatedAt: Date.now()
-          });
-          toast.success("Ghost mode enabled - you're now invisible");
-        } else {
-          // Coming out of ghost mode - restore location data
-          await update(userRef, {
-            ghostMode: false,
-            lat: location.latitude,
-            lng: location.longitude,
-            updatedAt: Date.now()
-          });
-          toast.success("Ghost mode disabled - you're now visible");
-        }
-      } catch (error) {
-        console.error("Error updating ghost mode:", error);
-        toast.error("Failed to update ghost mode");
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (!permissionState) {
-      requestPermission();
-    }
-  }, [permissionState, requestPermission]);
-
-  const showLocationModal = !location && (permissionState === 'prompt' || permissionDenied);
-
-  return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#10141B]">
-      <motion.div
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-        className="absolute top-0 left-0 right-0 z-10 flex items-center px-4 py-3 glass-panel"
-      >
-        <h1 className="text-2xl font-outfit font-bold text-white">Zoned</h1>
-      </motion.div>
-
-      <div className="w-full h-full">
-        <Map
-          location={location}
-          radiusFeet={radiusFeet}
-          otherUsers={otherUsers}
-          onMapDrag={() => setMapDragged(true)}
-          isAnimating={isAnimating}
-          setIsAnimating={setIsAnimating}
-        />
-
-        <AnimatePresence>
-          {ghostMode && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm z-20 pointer-events-none"
-              aria-label="Ghost mode is enabled"
-            />
-          )}
-        </AnimatePresence>
-
-        <MapControls
-          radiusFeet={radiusFeet}
-          ghostMode={ghostMode}
-          onRadiusChange={setRadiusFeet}
-          onRadiusChangeComplete={setRadiusFeet}
-          onGhostModeChange={handleGhostModeChange}
-          onProfileClick={() => setShowProfileDrawer(true)}
-          disabled={usersLoading}
-        />
-
-        {mapDragged && (
-          <RecenterButton
-            onClick={handleRecenter}
-            className="absolute bottom-60 right-6 z-10"
-          />
-        )}
-      </div>
-
-      <LocationPermissionModal
-        isOpen={showLocationModal}
-        onRequestPermission={requestPermission}
-        permissionDenied={permissionDenied}
-      />
-
-      <ProfileDrawer
-        open={showProfileDrawer}
-        onOpenChange={setShowProfileDrawer}
-        user={user}
-        ghostMode={ghostMode}
-        onGhostModeChange={handleGhostModeChange}
-        onUpdateProfile={handleUpdateProfile}
-      />
-    </div>
-  );
+const libraries: any = ["places"];
+const mapContainerStyle = {
+width: "100vw",
+height: "100vh",
+};
+const options = {
+disableDefaultUI: true,
+zoomControl: true,
+styles: [], // Optional: you can add dark theme style here later
 };
 
-export default RadarMap;
+interface User {
+id: string;
+lat: number;
+lng: number;
+socials: {
+instagram?: string;
+snapchat?: string;
+};
+ghostMode?: boolean;
+}
+
+const UserMarker: React.FC<{ user: User }> = ({ user }) => {
+const [position, setPosition] = useState<{ lat: number; lng: number }>({
+lat: user.lat,
+lng: user.lng,
+});
+
+useEffect(() => {
+const animationDuration = 300; // milliseconds
+const steps = 30;
+const latStep = (user.lat - position.lat) / steps;
+const lngStep = (user.lng - position.lng) / steps;
+
+let currentStep = 0;
+const interval = setInterval(() => {
+currentStep++;
+setPosition((prev) => ({
+lat: prev.lat + latStep,
+lng: prev.lng + lngStep,
+}));
+
+if (currentStep >= steps) {
+clearInterval(interval);
+}
+}, animationDuration / steps);
+
+return () => clearInterval(interval);
+}, [user.lat, user.lng]);
+
+return <Marker position={position} />;
+};
+
+export default function RadarMap() {
+const { isLoaded, loadError } = useLoadScript({
+googleMapsApiKey: "YOUR_GOOGLE_MAPS_API_KEY", // <--- REPLACE THIS
+libraries,
+});
+
+const [currentUserLocation, setCurrentUserLocation] = useState<{
+lat: number;
+lng: number;
+} | null>(null);
+
+const [nearbyUsers, setNearbyUsers] = useState<User[]>([]);
+
+useEffect(() => {
+navigator.geolocation.watchPosition(
+(position) => {
+setCurrentUserLocation({
+lat: position.coords.latitude,
+lng: position.coords.longitude,
+});
+},
+(error) => console.error(error),
+{ enableHighAccuracy: true }
+);
+}, []);
+
+useEffect(() => {
+const usersRef = ref(database, "users");
+
+const unsubscribe = onValue(usersRef, (snapshot) => {
+const data = snapshot.val();
+if (data) {
+const users = Object.keys(data).map((key) => ({
+id: key,
+...data[key],
+})) as User[];
+
+setNearbyUsers(users.filter((user) => !user.ghostMode)); // hide ghost users
+}
+});
+
+return () => unsubscribe();
+}, []);
+
+if (loadError) return <h1>Error loading maps</h1>;
+if (!isLoaded) return <h1>Loading Maps...</h1>;
+
+return (
+<div style={{ width: "100%", height: "100vh" }}>
+{currentUserLocation && (
+<GoogleMap
+mapContainerStyle={mapContainerStyle}
+zoom={18}
+center={currentUserLocation}
+options={options}
+>
+{/* Render current user's own marker */}
+<Marker position={currentUserLocation} />
+
+{/* Render nearby users with smooth animation */}
+{nearbyUsers.map((user) => (
+<UserMarker key={user.id} user={user} />
+))}
+</GoogleMap>
+)}
+</div>
+);
+}
