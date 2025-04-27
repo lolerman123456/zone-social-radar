@@ -1,6 +1,6 @@
 
 import { useEffect, useRef } from 'react';
-import { getDatabase, ref, set } from "firebase/database";
+import { getDatabase, ref, set, get } from "firebase/database";
 import { getAuth } from "firebase/auth";
 import { LocationState } from './useLocation';
 
@@ -11,7 +11,32 @@ export const useLocationUpdater = (
   const auth = getAuth();
   const db = getDatabase();
   const prevLocation = useRef<{lat: number, lng: number} | null>(null);
+  const userDataRef = useRef<any>(null);
 
+  // Load initial user data once
+  useEffect(() => {
+    const loadUserData = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      try {
+        const userRef = ref(db, `users/${user.uid}`);
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+          userDataRef.current = snapshot.val();
+          console.log("Loaded user data:", userDataRef.current);
+        }
+      } catch (error) {
+        console.error("Error loading user data:", error);
+      }
+    };
+    
+    if (auth.currentUser) {
+      loadUserData();
+    }
+  }, [auth.currentUser?.uid]);
+
+  // Update location when it changes
   useEffect(() => {
     if (location) {
       const currentLocation = {
@@ -42,7 +67,11 @@ export const useLocationUpdater = (
       set(userRef, {
         uid: user.uid,
         ghostMode: true,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        // Preserve other user data
+        name: userDataRef.current?.name || user.displayName || 'User',
+        photoUrl: userDataRef.current?.photoUrl || user.photoURL,
+        socials: userDataRef.current?.socials || {}
       });
     } else {
       // Normal mode with location
@@ -52,9 +81,10 @@ export const useLocationUpdater = (
         lng: longitude,
         ghostMode: false,
         updatedAt: Date.now(),
-        socials: {
-          instagram: '@placeholder'
-        }
+        // Preserve user data
+        name: userDataRef.current?.name || user.displayName || 'User',
+        photoUrl: userDataRef.current?.photoUrl || user.photoURL,
+        socials: userDataRef.current?.socials || {}
       });
     }
   };

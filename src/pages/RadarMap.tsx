@@ -36,8 +36,14 @@ const RadarMap: React.FC = () => {
     maximumAge: 0
   });
 
-  const { otherUsers } = useNearbyUsers();
+  const { otherUsers, loading: usersLoading } = useNearbyUsers();
   useLocationUpdater(location, ghostMode);
+  
+  useEffect(() => {
+    if (otherUsers.length > 0) {
+      toast.info(`${otherUsers.length} user${otherUsers.length === 1 ? '' : 's'} nearby`);
+    }
+  }, [otherUsers.length]);
   
   const handleUpdateProfile = async (data: any) => {
     if (!user) return;
@@ -146,6 +152,7 @@ const RadarMap: React.FC = () => {
           onRadiusChangeComplete={setRadiusFeet}
           onGhostModeChange={handleGhostModeChange}
           onProfileClick={() => setShowProfileDrawer(true)}
+          disabled={usersLoading}
         />
 
         {mapDragged && (

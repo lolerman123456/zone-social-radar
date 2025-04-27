@@ -3,6 +3,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { darkMapStyles } from '@/lib/mapStyles';
 import { motion, AnimatePresence } from 'framer-motion';
 import SocialCard from './SocialCard';
+import { NearbyUser } from '@/hooks/useNearbyUsers';
 
 const ZOOM_MIN = 15;
 const ZOOM_MAX = 20;
@@ -11,7 +12,7 @@ const METERS_PER_FOOT = 0.3048;
 interface MapProps {
   location: { latitude: number; longitude: number } | null;
   radiusFeet: number;
-  otherUsers: any[];
+  otherUsers: NearbyUser[];
   onMapDrag: () => void;
   isAnimating: boolean;
   setIsAnimating: (value: boolean) => void;
@@ -128,6 +129,8 @@ const Map: React.FC<MapProps> = ({
   useEffect(() => {
     if (!googleMapRef.current || !location) return;
     
+    console.log("Updating markers for other users:", otherUsers);
+    
     // Clear existing markers
     nearbyMarkers.current.forEach(marker => {
       google.maps.event.clearInstanceListeners(marker);
@@ -139,6 +142,8 @@ const Map: React.FC<MapProps> = ({
     otherUsers.forEach(user => {
       if (!user.lat || !user.lng || user.ghostMode) return;
 
+      console.log("Creating marker for user:", user.name || user.uid);
+      
       const userPosition = { lat: user.lat, lng: user.lng };
       
       const marker = new google.maps.Marker({
@@ -152,15 +157,28 @@ const Map: React.FC<MapProps> = ({
           strokeWeight: 2,
           scale: 6
         },
-        animation: google.maps.Animation.DROP
+        animation: google.maps.Animation.DROP,
+        title: user.name || 'User'
       });
 
-      // Add click event for marker
+      // Add click event with animation for marker
       marker.addListener("click", () => {
+        // Animation effect when clicked
+        const originalScale = marker.getIcon() as google.maps.Symbol;
+        const expandedIcon = {
+          ...originalScale,
+          scale: 8 // Make it slightly bigger when clicked
+        };
+        marker.setIcon(expandedIcon);
+        
+        setTimeout(() => {
+          marker.setIcon(originalScale);
+        }, 300);
+        
         // Convert user data to format expected by SocialCard
         const socialCardData = {
           id: user.uid,
-          name: user.name || 'Unknown User',
+          name: user.name || 'User ' + user.uid.substring(0, 4),
           photoUrl: user.photoUrl,
           socialLinks: {
             instagram: user.socials?.instagram || '',
