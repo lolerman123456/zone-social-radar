@@ -36,14 +36,14 @@ export const useLocationUpdater = (
       loadUserData();
     }
     
-    // Set up interval to force update location EVERY 2 SECONDS instead of 5
+    // Set up interval to force update location EVERY 1 SECOND
     if (updateIntervalRef.current === null) {
       updateIntervalRef.current = window.setInterval(() => {
         if (location && auth.currentUser) {
-          // Force update location every 2 seconds regardless of movement
+          // Force update location every 1 second regardless of movement
           updateLocation(location.latitude, location.longitude);
         }
-      }, 2000); // Changed from 5000 to 2000 ms
+      }, 1000); // Changed to 1 second for more responsive updates
     }
     
     return () => {
@@ -62,9 +62,9 @@ export const useLocationUpdater = (
         lng: location.longitude
       };
       
-      // Lower threshold to 0.5 meter for even more frequent updates
+      // Minimal threshold (0.1 meter) to capture very small movements
       const hasMovedEnough = !prevLocation.current || 
-        calculateDistance(prevLocation.current, currentLocation) > 0.5; // 0.5 meter threshold (was 1)
+        calculateDistance(prevLocation.current, currentLocation) > 0.1; // 0.1 meter threshold (was 0.5)
         
       if (hasMovedEnough) {
         updateLocation(location.latitude, location.longitude);
