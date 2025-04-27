@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import { getDatabase, ref, set, get } from "firebase/database";
 import { getAuth } from "firebase/auth";
@@ -35,14 +36,14 @@ export const useLocationUpdater = (
       loadUserData();
     }
     
-    // Set up interval to force update location every 5 seconds
+    // Set up interval to force update location EVERY 2 SECONDS instead of 5
     if (updateIntervalRef.current === null) {
       updateIntervalRef.current = window.setInterval(() => {
         if (location && auth.currentUser) {
-          // Force update location every 5 seconds regardless of movement
+          // Force update location every 2 seconds regardless of movement
           updateLocation(location.latitude, location.longitude);
         }
-      }, 5000);
+      }, 2000); // Changed from 5000 to 2000 ms
     }
     
     return () => {
@@ -61,9 +62,9 @@ export const useLocationUpdater = (
         lng: location.longitude
       };
       
-      // Lower threshold to 1 meter for more frequent updates
+      // Lower threshold to 0.5 meter for even more frequent updates
       const hasMovedEnough = !prevLocation.current || 
-        calculateDistance(prevLocation.current, currentLocation) > 1; // 1 meter threshold
+        calculateDistance(prevLocation.current, currentLocation) > 0.5; // 0.5 meter threshold (was 1)
         
       if (hasMovedEnough) {
         updateLocation(location.latitude, location.longitude);

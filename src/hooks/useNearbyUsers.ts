@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { getDatabase, ref, onValue, off, DataSnapshot } from "firebase/database";
 import { getAuth } from "firebase/auth";
@@ -46,8 +47,8 @@ export const useNearbyUsers = () => {
             // Filter out users in ghost mode
             if (u.ghostMode) return false;
             
-            // Check for freshness (active in the last 3 minutes - increasing this window)
-            const freshness = 3 * 60 * 1000; // 3 minutes instead of 60 seconds
+            // Check for freshness (active in the last 5 minutes - increasing this window)
+            const freshness = 5 * 60 * 1000; // 5 minutes instead of 3 minutes
             const isFresh = u.updatedAt && (Date.now() - u.updatedAt < freshness);
             return isFresh;
           });
@@ -67,7 +68,7 @@ export const useNearbyUsers = () => {
       setLoading(false);
     });
     
-    // Force refresh every 5 seconds to ensure data stays current
+    // Force refresh every 2 seconds to ensure data stays current
     const refreshInterval = setInterval(() => {
       console.log("Forcing nearby users refresh");
       const currentUser = auth.currentUser;
@@ -76,7 +77,7 @@ export const useNearbyUsers = () => {
         const userRef = ref(db, `users/${currentUser.uid}`);
         onValue(userRef, () => {}, { onlyOnce: true });
       }
-    }, 5000);
+    }, 2000); // Changed from 5000 to 2000 ms
     
     return () => {
       off(usersRef, "value", handleData);

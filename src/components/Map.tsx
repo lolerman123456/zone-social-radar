@@ -8,6 +8,7 @@ import { NearbyUser } from '@/hooks/useNearbyUsers';
 const ZOOM_MIN = 15;
 const ZOOM_MAX = 20;
 const METERS_PER_FOOT = 0.3048;
+const ANIMATION_SPEED = 0.15; // Smoother animation (increased from 0.1)
 
 interface MapProps {
   location: { latitude: number; longitude: number } | null;
@@ -32,6 +33,7 @@ const Map: React.FC<MapProps> = ({
   const radiusCircleRef = useRef<google.maps.Circle | null>(null);
   const nearbyMarkers = useRef<{[key: string]: google.maps.Marker}>({});
   const markersPositionRef = useRef<{[key: string]: google.maps.LatLngLiteral}>({});
+  const animationFrameRef = useRef<number | null>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
   // Initialize map as soon as component mounts, don't wait for location
@@ -63,8 +65,8 @@ const Map: React.FC<MapProps> = ({
       if (isAnimating) setIsAnimating(false);
     });
     
-    // Animation loop to smoothly move markers
-    const animationFrame = () => {
+    // Enhanced animation loop with smooth interpolation
+    const animateMarkers = () => {
       // Process smooth marker animations
       Object.keys(nearbyMarkers.current).forEach(uid => {
         const marker = nearbyMarkers.current[uid];
@@ -73,24 +75,43 @@ const Map: React.FC<MapProps> = ({
         if (marker && targetPosition) {
           const currentPosition = marker.getPosition()?.toJSON();
           if (currentPosition) {
-            // Interpolate position for smooth movement (easing function)
-            const newLat = currentPosition.lat + (targetPosition.lat - currentPosition.lat) * 0.1;
-            const newLng = currentPosition.lng + (targetPosition.lng - currentPosition.lng) * 0.1;
+            // Enhanced easing function for smoother movement
+            const newLat = currentPosition.lat + (targetPosition.lat - currentPosition.lat) * ANIMATION_SPEED;
+            const newLng = currentPosition.lng + (targetPosition.lng - currentPosition.lng) * ANIMATION_SPEED;
             
             marker.setPosition({ lat: newLat, lng: newLng });
           }
         }
       });
       
-      requestAnimationFrame(animationFrame);
+      // Also animate user marker with the same smoothness if it exists
+      if (userMarkerRef.current && location) {
+        const currentPosition = userMarkerRef.current.getPosition()?.toJSON();
+        if (currentPosition) {
+          const targetPosition = { lat: location.latitude, lng: location.longitude };
+          const newLat = currentPosition.lat + (targetPosition.lat - currentPosition.lat) * ANIMATION_SPEED;
+          const newLng = currentPosition.lng + (targetPosition.lng - currentPosition.lng) * ANIMATION_SPEED;
+          
+          userMarkerRef.current.setPosition({ lat: newLat, lng: newLng });
+        }
+      }
+      
+      // Continue animation loop
+      animationFrameRef.current = requestAnimationFrame(animateMarkers);
     };
     
-    requestAnimationFrame(animationFrame);
+    // Start animation loop
+    animationFrameRef.current = requestAnimationFrame(animateMarkers);
     
     return () => {
       // Clean up Google Maps objects when component unmounts
       if (googleMapRef.current) {
         google.maps.event.clearInstanceListeners(googleMapRef.current);
+      }
+      
+      // Cancel animation frame
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
     };
   }, []);
@@ -126,7 +147,7 @@ const Map: React.FC<MapProps> = ({
       userMarkerRef.current = userCircleMarker;
     } else {
       // Update target position - animation handled by animation loop
-      animateMarkerTo(userMarkerRef.current, userLocation);
+      markersPositionRef.current['currentUser'] = userLocation;
     }
 
     // Create or update radius circle
