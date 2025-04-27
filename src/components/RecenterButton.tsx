@@ -17,7 +17,7 @@ const RecenterButton: React.FC<RecenterButtonProps> = ({ onClick, className }) =
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0.95, opacity: 0 }}
       whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+      whileTap={{ scale: 0.95, rotate: 20 }}
       transition={{ 
         type: "spring",
         stiffness: 400,

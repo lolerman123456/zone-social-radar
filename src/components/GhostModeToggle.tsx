@@ -25,14 +25,18 @@ const GhostModeToggle: React.FC<GhostModeToggleProps> = ({ enabled, onChange, cl
 
   return (
     <>
-      <div className={`flex items-center space-x-3 ${className || ''}`}>
+      <motion.div 
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.97 }}
+        className={`flex items-center space-x-3 ${className || ''}`}
+      >
         <Switch
           checked={enabled}
           onCheckedChange={onChange}
           className="data-[state=checked]:bg-coral"
         />
         <span className="font-medium">Ghost mode</span>
-      </div>
+      </motion.div>
 
       {/* Ghost Mode Overlay */}
       <AnimatePresence>
@@ -50,16 +54,34 @@ const GhostModeToggle: React.FC<GhostModeToggleProps> = ({ enabled, onChange, cl
               transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
               className="text-center p-6"
             >
-              <Ghost className="w-20 h-20 text-white mx-auto mb-6" />
+              <motion.div
+                animate={{ 
+                  y: [0, -10, 0],
+                  opacity: [1, 0.8, 1],
+                }}
+                transition={{ 
+                  repeat: Infinity, 
+                  duration: 3,
+                  ease: "easeInOut"
+                }}
+              >
+                <Ghost className="w-20 h-20 text-white mx-auto mb-6" />
+              </motion.div>
+              
               <h2 className="text-3xl font-bold text-white mb-4">Ghost Mode Active</h2>
               <p className="text-gray-200 text-lg mb-8">You are invisible to others and cannot see other users</p>
               
-              <Button
-                onClick={() => onChange(false)}
-                className="bg-coral hover:bg-coral-dark text-white px-8 py-6 rounded-full text-lg"
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                Disable Ghost Mode
-              </Button>
+                <Button
+                  onClick={() => onChange(false)}
+                  className="bg-coral hover:bg-coral-dark text-white px-8 py-6 rounded-full text-lg"
+                >
+                  Disable Ghost Mode
+                </Button>
+              </motion.div>
             </motion.div>
           </motion.div>
         )}

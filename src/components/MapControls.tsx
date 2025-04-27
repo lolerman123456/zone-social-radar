@@ -28,7 +28,7 @@ const MapControls: React.FC<MapControlsProps> = ({
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.5 }}
-        className="absolute bottom-36 left-0 right-0 px-6 z-10"
+        className="absolute bottom-36 left-0 right-0 px-6 z-30"
       >
         <RadiusSlider
           value={radiusFeet}
@@ -43,15 +43,19 @@ const MapControls: React.FC<MapControlsProps> = ({
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
-        className="absolute bottom-10 left-0 right-0 flex justify-between items-center px-6 z-10"
+        className="absolute bottom-10 left-0 right-0 flex justify-between items-center px-6 z-30"
       >
-        <div className="w-[45%]">
+        <motion.div 
+          className="w-[45%]"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
           <GhostModeToggle
             enabled={ghostMode}
             onChange={onGhostModeChange}
             className="bg-black/40 backdrop-blur-sm p-3 rounded-full"
           />
-        </div>
+        </motion.div>
 
         <motion.div
           whileTap={{ scale: 0.95 }}
