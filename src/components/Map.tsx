@@ -4,11 +4,11 @@ import { darkMapStyles } from '@/lib/mapStyles';
 import { motion, AnimatePresence } from 'framer-motion';
 import SocialCard from './SocialCard';
 import { NearbyUser } from '@/hooks/useNearbyUsers';
+import UserMarkers from './map/UserMarkers';
+import UserLocation from './map/UserLocation';
 
 const ZOOM_MIN = 15;
 const ZOOM_MAX = 20;
-const METERS_PER_FOOT = 0.3048;
-const ANIMATION_SPEED = 0.08; // Smoother animation with slightly slower speed for more visible movement
 
 interface MapProps {
   location: { latitude: number; longitude: number } | null;
@@ -29,23 +29,15 @@ const Map: React.FC<MapProps> = ({
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const googleMapRef = useRef<google.maps.Map | null>(null);
-  const userMarkerRef = useRef<google.maps.Marker | null>(null);
-  const radiusCircleRef = useRef<google.maps.Circle | null>(null);
-  const nearbyMarkers = useRef<{[key: string]: google.maps.Marker}>({});
-  const markersPositionRef = useRef<{[key: string]: google.maps.LatLngLiteral}>({});
-  const animationFrameRef = useRef<number | null>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   
-  // Store the current user location for animation
-  const userLocationRef = useRef<{lat: number, lng: number} | null>(null);
-
-  // Initialize map as soon as component mounts, don't wait for location
+  // Initialize map
   useEffect(() => {
     if (!mapRef.current) return;
     
     const initialLocation = location ? 
       { lat: location.latitude, lng: location.longitude } : 
-      { lat: 37.7749, lng: -122.4194 }; // Default location until we get user's location
+      { lat: 37.7749, lng: -122.4194 };
     
     const map = new google.maps.Map(mapRef.current, {
       center: initialLocation,
@@ -62,206 +54,25 @@ const Map: React.FC<MapProps> = ({
 
     googleMapRef.current = map;
 
-    // Add event listeners for map interaction
     map.addListener("dragstart", onMapDrag);
     map.addListener("idle", () => {
       if (isAnimating) setIsAnimating(false);
     });
     
-    // Enhanced animation loop with smooth interpolation
-    const animateMarkers = () => {
-      // Process smooth marker animations for nearby users
-      Object.keys(nearbyMarkers.current).forEach(uid => {
-        const marker = nearbyMarkers.current[uid];
-        const targetPosition = markersPositionRef.current[uid];
-        
-        if (marker && targetPosition) {
-          const currentPosition = marker.getPosition()?.toJSON();
-          if (currentPosition) {
-            // Enhanced easing function for smoother movement
-            const newLat = currentPosition.lat + (targetPosition.lat - currentPosition.lat) * ANIMATION_SPEED;
-            const newLng = currentPosition.lng + (targetPosition.lng - currentPosition.lng) * ANIMATION_SPEED;
-            
-            marker.setPosition({ lat: newLat, lng: newLng });
-          }
-        }
-      });
-      
-      // Also animate user marker with the same smoothness if it exists
-      if (userMarkerRef.current && userLocationRef.current) {
-        const currentPosition = userMarkerRef.current.getPosition()?.toJSON();
-        if (currentPosition) {
-          const targetPosition = userLocationRef.current;
-          const newLat = currentPosition.lat + (targetPosition.lat - currentPosition.lat) * ANIMATION_SPEED;
-          const newLng = currentPosition.lng + (targetPosition.lng - currentPosition.lng) * ANIMATION_SPEED;
-          
-          userMarkerRef.current.setPosition({ lat: newLat, lng: newLng });
-          
-          // Move radius circle along with the user marker
-          if (radiusCircleRef.current) {
-            radiusCircleRef.current.setCenter({ lat: newLat, lng: newLng });
-          }
-        }
-      }
-      
-      // Continue animation loop
-      animationFrameRef.current = requestAnimationFrame(animateMarkers);
-    };
-    
-    // Start animation loop
-    animationFrameRef.current = requestAnimationFrame(animateMarkers);
-    
     return () => {
-      // Clean up Google Maps objects when component unmounts
       if (googleMapRef.current) {
         google.maps.event.clearInstanceListeners(googleMapRef.current);
-      }
-      
-      // Cancel animation frame
-      if (animationFrameRef.current !== null) {
-        cancelAnimationFrame(animationFrameRef.current);
       }
     };
   }, []);
 
-  // Update user location reference when location changes
-  useEffect(() => {
-    if (location) {
-      userLocationRef.current = { lat: location.latitude, lng: location.longitude };
-      
-      // If first time getting location or animating back to user
-      if (!userMarkerRef.current || isAnimating) {
-        if (googleMapRef.current) {
-          googleMapRef.current.panTo(userLocationRef.current);
-        }
-      }
-      
-      // Create user marker if it doesn't exist yet
-      if (!userMarkerRef.current && googleMapRef.current) {
-        userMarkerRef.current = new google.maps.Marker({
-          position: userLocationRef.current,
-          map: googleMapRef.current,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: "#ea384c",
-            fillOpacity: 1,
-            strokeColor: "#ea384c",
-            strokeWeight: 2,
-            scale: 8
-          },
-          zIndex: 1000,
-        });
-        
-        // Create radius circle if not exists
-        radiusCircleRef.current = new google.maps.Circle({
-          map: googleMapRef.current,
-          center: userLocationRef.current,
-          radius: radiusFeet * METERS_PER_FOOT,
-          strokeColor: "#ea384c",
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: "#ea384c",
-          fillOpacity: 0.1,
-          zIndex: 500,
-        });
-      }
-      
-      // Update radius circle size when radius changes
-      if (radiusCircleRef.current) {
-        radiusCircleRef.current.setRadius(radiusFeet * METERS_PER_FOOT);
-      }
-    }
-  }, [location, radiusFeet, isAnimating]);
-
-  // Update other users' markers
-  useEffect(() => {
-    if (!googleMapRef.current || !location) return;
-    
-    console.log("Updating markers for other users:", otherUsers);
-    
-    // Track existing marker IDs for cleanup
-    const existingMarkerIds = new Set(Object.keys(nearbyMarkers.current));
-    
-    // Create or update markers for each user in range
-    otherUsers.forEach(user => {
-      if (!user.lat || !user.lng || user.ghostMode) return;
-      existingMarkerIds.delete(user.uid); // Keep this marker
-
-      console.log("Processing user:", user.name || user.uid);
-      const userPosition = { lat: user.lat, lng: user.lng };
-      
-      // Store target position for animation
-      markersPositionRef.current[user.uid] = userPosition;
-      
-      if (!nearbyMarkers.current[user.uid] && googleMapRef.current) {
-        // Create new marker if it doesn't exist
-        console.log("Creating new marker for", user.name || user.uid);
-        const marker = new google.maps.Marker({
-          position: userPosition, // Start at actual position
-          map: googleMapRef.current,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: "#00FFAA",
-            fillOpacity: 1,
-            strokeColor: "#00FFAA",
-            strokeWeight: 2,
-            scale: 6
-          },
-          title: user.name || 'User'
-        });
-
-        // Add click event with animation for marker
-        marker.addListener("click", () => {
-          // Animation effect when clicked
-          const originalScale = marker.getIcon() as google.maps.Symbol;
-          const expandedIcon = {
-            ...originalScale,
-            scale: 8 // Make it slightly bigger when clicked
-          };
-          marker.setIcon(expandedIcon);
-          
-          setTimeout(() => {
-            marker.setIcon(originalScale);
-          }, 300);
-          
-          // Convert user data to format expected by SocialCard
-          const socialCardData = {
-            id: user.uid,
-            name: user.name || 'User ' + user.uid.substring(0, 4),
-            photoUrl: user.photoUrl,
-            socialLinks: {
-              instagram: user.socials?.instagram || '',
-              twitter: user.socials?.tiktok || '',
-            }
-          };
-          
-          setSelectedUser(socialCardData);
-        });
-
-        nearbyMarkers.current[user.uid] = marker;
-      }
-    });
-    
-    // Clean up markers for users who are no longer nearby
-    existingMarkerIds.forEach(uid => {
-      if (nearbyMarkers.current[uid]) {
-        nearbyMarkers.current[uid].setMap(null);
-        google.maps.event.clearInstanceListeners(nearbyMarkers.current[uid]);
-        delete nearbyMarkers.current[uid];
-        delete markersPositionRef.current[uid];
-      }
-    });
-  }, [otherUsers, location]);
-
-  // Helper function to calculate zoom level based on radius
   const getZoomFromRadius = (feet: number) => {
-    const meters = feet * METERS_PER_FOOT;
-    const baseZoom = 20;
+    const meters = feet * 0.3048;
     return Math.max(
       ZOOM_MIN,
       Math.min(
         ZOOM_MAX,
-        baseZoom - Math.log2(meters / 15)
+        20 - Math.log2(meters / 15)
       )
     );
   };
@@ -269,6 +80,21 @@ const Map: React.FC<MapProps> = ({
   return (
     <div className="w-full h-full">
       <div ref={mapRef} className="w-full h-full" />
+      
+      {googleMapRef.current && (
+        <>
+          <UserLocation
+            map={googleMapRef.current}
+            location={location}
+            radiusFeet={radiusFeet}
+          />
+          <UserMarkers
+            map={googleMapRef.current}
+            otherUsers={otherUsers}
+            onUserSelect={setSelectedUser}
+          />
+        </>
+      )}
       
       <AnimatePresence>
         {selectedUser && (
