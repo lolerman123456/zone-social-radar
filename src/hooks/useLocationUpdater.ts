@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from 'react';
 import { getDatabase, ref, set, get } from "firebase/database";
 import { getAuth } from "firebase/auth";
@@ -12,6 +11,7 @@ export const useLocationUpdater = (
   const db = getDatabase();
   const prevLocation = useRef<{lat: number, lng: number} | null>(null);
   const userDataRef = useRef<any>(null);
+  const updateIntervalRef = useRef<number | null>(null);
 
   // Load initial user data once
   useEffect(() => {
@@ -34,6 +34,23 @@ export const useLocationUpdater = (
     if (auth.currentUser) {
       loadUserData();
     }
+    
+    // Set up interval to force update location every 5 seconds
+    if (updateIntervalRef.current === null) {
+      updateIntervalRef.current = window.setInterval(() => {
+        if (location && auth.currentUser) {
+          // Force update location every 5 seconds regardless of movement
+          updateLocation(location.latitude, location.longitude);
+        }
+      }, 5000);
+    }
+    
+    return () => {
+      if (updateIntervalRef.current !== null) {
+        clearInterval(updateIntervalRef.current);
+        updateIntervalRef.current = null;
+      }
+    };
   }, [auth.currentUser?.uid]);
 
   // Update location when it changes
@@ -44,9 +61,9 @@ export const useLocationUpdater = (
         lng: location.longitude
       };
       
-      // Only update if position has changed significantly (prevents database spam)
+      // Lower threshold to 1 meter for more frequent updates
       const hasMovedEnough = !prevLocation.current || 
-        calculateDistance(prevLocation.current, currentLocation) > 5; // 5 meters threshold
+        calculateDistance(prevLocation.current, currentLocation) > 1; // 1 meter threshold
         
       if (hasMovedEnough) {
         updateLocation(location.latitude, location.longitude);
@@ -63,7 +80,7 @@ export const useLocationUpdater = (
     
     // Different data depending on ghost mode
     if (ghostMode) {
-      // In ghost mode, don't send location
+      // In ghost mode, don't send location but keep updating timestamp
       set(userRef, {
         uid: user.uid,
         ghostMode: true,

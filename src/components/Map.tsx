@@ -30,7 +30,8 @@ const Map: React.FC<MapProps> = ({
   const googleMapRef = useRef<google.maps.Map | null>(null);
   const userMarkerRef = useRef<google.maps.Marker | null>(null);
   const radiusCircleRef = useRef<google.maps.Circle | null>(null);
-  const nearbyMarkers = useRef<google.maps.Marker[]>([]);
+  const nearbyMarkers = useRef<{[key: string]: google.maps.Marker}>({});
+  const markersPositionRef = useRef<{[key: string]: google.maps.LatLngLiteral}>({});
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
   // Initialize map as soon as component mounts, don't wait for location
@@ -61,6 +62,30 @@ const Map: React.FC<MapProps> = ({
     map.addListener("idle", () => {
       if (isAnimating) setIsAnimating(false);
     });
+    
+    // Animation loop to smoothly move markers
+    const animationFrame = () => {
+      // Process smooth marker animations
+      Object.keys(nearbyMarkers.current).forEach(uid => {
+        const marker = nearbyMarkers.current[uid];
+        const targetPosition = markersPositionRef.current[uid];
+        
+        if (marker && targetPosition) {
+          const currentPosition = marker.getPosition()?.toJSON();
+          if (currentPosition) {
+            // Interpolate position for smooth movement (easing function)
+            const newLat = currentPosition.lat + (targetPosition.lat - currentPosition.lat) * 0.1;
+            const newLng = currentPosition.lng + (targetPosition.lng - currentPosition.lng) * 0.1;
+            
+            marker.setPosition({ lat: newLat, lng: newLng });
+          }
+        }
+      });
+      
+      requestAnimationFrame(animationFrame);
+    };
+    
+    requestAnimationFrame(animationFrame);
     
     return () => {
       // Clean up Google Maps objects when component unmounts
@@ -100,7 +125,7 @@ const Map: React.FC<MapProps> = ({
 
       userMarkerRef.current = userCircleMarker;
     } else {
-      // Smoothly animate marker to new position
+      // Update target position - animation handled by animation loop
       animateMarkerTo(userMarkerRef.current, userLocation);
     }
 
@@ -131,99 +156,91 @@ const Map: React.FC<MapProps> = ({
     
     console.log("Updating markers for other users:", otherUsers);
     
-    // Clear existing markers
-    nearbyMarkers.current.forEach(marker => {
-      google.maps.event.clearInstanceListeners(marker);
-      marker.setMap(null);
-    });
-    nearbyMarkers.current = [];
-
-    // Add markers for each user in range
+    // Track existing marker IDs for cleanup
+    const existingMarkerIds = new Set(Object.keys(nearbyMarkers.current));
+    
+    // Create or update markers for each user in range
     otherUsers.forEach(user => {
       if (!user.lat || !user.lng || user.ghostMode) return;
+      existingMarkerIds.delete(user.uid); // Keep this marker
 
-      console.log("Creating marker for user:", user.name || user.uid);
-      
+      console.log("Processing user:", user.name || user.uid);
       const userPosition = { lat: user.lat, lng: user.lng };
       
-      const marker = new google.maps.Marker({
-        position: userPosition,
-        map: googleMapRef.current,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          fillColor: "#00FFAA",
-          fillOpacity: 1,
-          strokeColor: "#00FFAA",
-          strokeWeight: 2,
-          scale: 6
-        },
-        animation: google.maps.Animation.DROP,
-        title: user.name || 'User'
-      });
+      // Store target position for animation
+      markersPositionRef.current[user.uid] = userPosition;
+      
+      if (!nearbyMarkers.current[user.uid]) {
+        // Create new marker if it doesn't exist
+        console.log("Creating new marker for", user.name || user.uid);
+        const marker = new google.maps.Marker({
+          position: userPosition, // Start at actual position
+          map: googleMapRef.current,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor: "#00FFAA",
+            fillOpacity: 1,
+            strokeColor: "#00FFAA",
+            strokeWeight: 2,
+            scale: 6
+          },
+          animation: google.maps.Animation.DROP,
+          title: user.name || 'User'
+        });
 
-      // Add click event with animation for marker
-      marker.addListener("click", () => {
-        // Animation effect when clicked
-        const originalScale = marker.getIcon() as google.maps.Symbol;
-        const expandedIcon = {
-          ...originalScale,
-          scale: 8 // Make it slightly bigger when clicked
-        };
-        marker.setIcon(expandedIcon);
-        
-        setTimeout(() => {
-          marker.setIcon(originalScale);
-        }, 300);
-        
-        // Convert user data to format expected by SocialCard
-        const socialCardData = {
-          id: user.uid,
-          name: user.name || 'User ' + user.uid.substring(0, 4),
-          photoUrl: user.photoUrl,
-          socialLinks: {
-            instagram: user.socials?.instagram || '',
-            twitter: user.socials?.tiktok || '',
-          }
-        };
-        
-        setSelectedUser(socialCardData);
-      });
+        // Add click event with animation for marker
+        marker.addListener("click", () => {
+          // Animation effect when clicked
+          const originalScale = marker.getIcon() as google.maps.Symbol;
+          const expandedIcon = {
+            ...originalScale,
+            scale: 8 // Make it slightly bigger when clicked
+          };
+          marker.setIcon(expandedIcon);
+          
+          setTimeout(() => {
+            marker.setIcon(originalScale);
+          }, 300);
+          
+          // Convert user data to format expected by SocialCard
+          const socialCardData = {
+            id: user.uid,
+            name: user.name || 'User ' + user.uid.substring(0, 4),
+            photoUrl: user.photoUrl,
+            socialLinks: {
+              instagram: user.socials?.instagram || '',
+              twitter: user.socials?.tiktok || '',
+            }
+          };
+          
+          setSelectedUser(socialCardData);
+        });
 
-      nearbyMarkers.current.push(marker);
+        nearbyMarkers.current[user.uid] = marker;
+      }
+    });
+    
+    // Clean up markers for users who are no longer nearby
+    existingMarkerIds.forEach(uid => {
+      if (nearbyMarkers.current[uid]) {
+        nearbyMarkers.current[uid].setMap(null);
+        google.maps.event.clearInstanceListeners(nearbyMarkers.current[uid]);
+        delete nearbyMarkers.current[uid];
+        delete markersPositionRef.current[uid];
+      }
     });
   }, [otherUsers, location]);
 
-  // Helper function for smooth marker animation
+  // Helper function for smooth marker animation setup
   const animateMarkerTo = (marker: google.maps.Marker, newPosition: google.maps.LatLngLiteral) => {
-    const startPosition = marker.getPosition()?.toJSON();
-    if (!startPosition) {
+    const currentPosition = marker.getPosition()?.toJSON();
+    if (!currentPosition) {
       marker.setPosition(newPosition);
       return;
     }
     
-    const frames = 50;
-    const duration = 500; // ms
-    let frame = 0;
-    
-    const animate = () => {
-      if (frame >= frames) {
-        marker.setPosition(newPosition);
-        return;
-      }
-      
-      frame++;
-      const progress = frame / frames;
-      
-      // Linear interpolation between positions
-      const lat = startPosition.lat + (newPosition.lat - startPosition.lat) * progress;
-      const lng = startPosition.lng + (newPosition.lng - startPosition.lng) * progress;
-      
-      marker.setPosition({ lat, lng });
-      
-      setTimeout(animate, duration / frames);
-    };
-    
-    animate();
+    // Only update target position - animation handled by animation loop
+    marker.set("targetPosition", newPosition);
   };
 
   // Helper function to calculate zoom level based on radius
