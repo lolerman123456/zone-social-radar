@@ -12,6 +12,7 @@ interface MapControlsProps {
   onRadiusChangeComplete: (val: number) => void;
   onGhostModeChange: (enabled: boolean) => void;
   onProfileClick: () => void;
+  disabled?: boolean;
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
@@ -21,6 +22,7 @@ const MapControls: React.FC<MapControlsProps> = ({
   onRadiusChangeComplete,
   onGhostModeChange,
   onProfileClick,
+  disabled = false,
 }) => {
   return (
     <>
@@ -36,6 +38,7 @@ const MapControls: React.FC<MapControlsProps> = ({
           max={150}
           onChange={onRadiusChange}
           onChangeComplete={onRadiusChangeComplete}
+          disabled={disabled}
         />
       </motion.div>
 
@@ -64,6 +67,7 @@ const MapControls: React.FC<MapControlsProps> = ({
         >
           <Button
             onClick={onProfileClick}
+            disabled={disabled}
             className="w-full bg-coral hover:bg-coral-dark text-white rounded-full py-6"
           >
             Profile

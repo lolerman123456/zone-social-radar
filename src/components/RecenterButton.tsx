@@ -7,12 +7,18 @@ import { motion } from "framer-motion";
 interface RecenterButtonProps {
   onClick: () => void;
   className?: string;
+  disabled?: boolean;
 }
 
-const RecenterButton: React.FC<RecenterButtonProps> = ({ onClick, className }) => {
+const RecenterButton: React.FC<RecenterButtonProps> = ({ 
+  onClick, 
+  className,
+  disabled = false
+}) => {
   return (
     <motion.button 
       onClick={onClick}
+      disabled={disabled}
       initial={{ scale: 0.95, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0.95, opacity: 0 }}
@@ -29,6 +35,7 @@ const RecenterButton: React.FC<RecenterButtonProps> = ({ onClick, className }) =
         "hover:bg-coral-dark transition-colors duration-200",
         "focus:outline-none focus:ring-2 focus:ring-white/20",
         "backdrop-blur-sm",
+        disabled ? "opacity-50 cursor-not-allowed" : "",
         className
       )}
       aria-label="Recenter map"
