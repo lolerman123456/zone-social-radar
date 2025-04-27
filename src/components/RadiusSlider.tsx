@@ -10,6 +10,7 @@ interface RadiusSliderProps {
   min?: number;
   max?: number;
   step?: number;
+  disabled?: boolean;
 }
 
 const RadiusSlider: React.FC<RadiusSliderProps> = ({
@@ -18,7 +19,8 @@ const RadiusSlider: React.FC<RadiusSliderProps> = ({
   onChangeComplete,
   min = 20,
   max = 150,
-  step = 1
+  step = 1,
+  disabled = false
 }) => {
   const prevValueRef = useRef(value);
   
@@ -59,6 +61,7 @@ const RadiusSlider: React.FC<RadiusSliderProps> = ({
           onValueChange={handleValueChange}
           onValueCommit={handleChangeComplete}
           className="my-6"
+          disabled={disabled}
         />
         
         <div className="flex justify-between mt-1 text-sm text-gray-400">
