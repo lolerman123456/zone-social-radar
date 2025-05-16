@@ -1,126 +1,127 @@
+
 import React, { useState, useEffect } from "react";
 import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 import { onValue, ref } from "firebase/database";
 import { database } from "../lib/firebase";
 
-const libraries: any = ["places"];
+const libraries = ["places"];
 const mapContainerStyle = {
-width: "100vw",
-height: "100vh",
+  width: "100vw",
+  height: "100vh",
 };
 const options = {
-disableDefaultUI: true,
-zoomControl: true,
-styles: [], // Optional: you can add dark theme style here later
+  disableDefaultUI: true,
+  zoomControl: true,
+  styles: [], // Optional: you can add dark theme style here later
 };
 
 interface User {
-id: string;
-lat: number;
-lng: number;
-socials: {
-instagram?: string;
-snapchat?: string;
-};
-ghostMode?: boolean;
+  id: string;
+  lat: number;
+  lng: number;
+  socials: {
+    instagram?: string;
+    snapchat?: string;
+  };
+  ghostMode?: boolean;
 }
 
 const UserMarker: React.FC<{ user: User }> = ({ user }) => {
-const [position, setPosition] = useState<{ lat: number; lng: number }>({
-lat: user.lat,
-lng: user.lng,
-});
+  const [position, setPosition] = useState<{ lat: number; lng: number }>({
+    lat: user.lat,
+    lng: user.lng,
+  });
 
-useEffect(() => {
-const animationDuration = 300; // milliseconds
-const steps = 30;
-const latStep = (user.lat - position.lat) / steps;
-const lngStep = (user.lng - position.lng) / steps;
+  useEffect(() => {
+    const animationDuration = 300; // milliseconds
+    const steps = 30;
+    const latStep = (user.lat - position.lat) / steps;
+    const lngStep = (user.lng - position.lng) / steps;
 
-let currentStep = 0;
-const interval = setInterval(() => {
-currentStep++;
-setPosition((prev) => ({
-lat: prev.lat + latStep,
-lng: prev.lng + lngStep,
-}));
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      currentStep++;
+      setPosition((prev) => ({
+        lat: prev.lat + latStep,
+        lng: prev.lng + lngStep,
+      }));
 
-if (currentStep >= steps) {
-clearInterval(interval);
-}
-}, animationDuration / steps);
+      if (currentStep >= steps) {
+        clearInterval(interval);
+      }
+    }, animationDuration / steps);
 
-return () => clearInterval(interval);
-}, [user.lat, user.lng]);
+    return () => clearInterval(interval);
+  }, [user.lat, user.lng]);
 
-return <Marker position={position} />;
+  return <Marker position={position} />;
 };
 
 export default function RadarMap() {
-const { isLoaded, loadError } = useLoadScript({
-googleMapsApiKey: "YOUR_GOOGLE_MAPS_API_KEY", // <--- REPLACE THIS
-libraries,
-});
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: "AIzaSyCjIwAJEFHqjHDOABZzeOQtvVg7F8ESYHI", // Using the API key from index.html
+    libraries: libraries as any,
+  });
 
-const [currentUserLocation, setCurrentUserLocation] = useState<{
-lat: number;
-lng: number;
-} | null>(null);
+  const [currentUserLocation, setCurrentUserLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
 
-const [nearbyUsers, setNearbyUsers] = useState<User[]>([]);
+  const [nearbyUsers, setNearbyUsers] = useState<User[]>([]);
 
-useEffect(() => {
-navigator.geolocation.watchPosition(
-(position) => {
-setCurrentUserLocation({
-lat: position.coords.latitude,
-lng: position.coords.longitude,
-});
-},
-(error) => console.error(error),
-{ enableHighAccuracy: true }
-);
-}, []);
+  useEffect(() => {
+    navigator.geolocation.watchPosition(
+      (position) => {
+        setCurrentUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+      },
+      (error) => console.error(error),
+      { enableHighAccuracy: true }
+    );
+  }, []);
 
-useEffect(() => {
-const usersRef = ref(database, "users");
+  useEffect(() => {
+    const usersRef = ref(database, "users");
 
-const unsubscribe = onValue(usersRef, (snapshot) => {
-const data = snapshot.val();
-if (data) {
-const users = Object.keys(data).map((key) => ({
-id: key,
-...data[key],
-})) as User[];
+    const unsubscribe = onValue(usersRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const users = Object.keys(data).map((key) => ({
+          id: key,
+          ...data[key],
+        })) as User[];
 
-setNearbyUsers(users.filter((user) => !user.ghostMode)); // hide ghost users
-}
-});
+        setNearbyUsers(users.filter((user) => !user.ghostMode)); // hide ghost users
+      }
+    });
 
-return () => unsubscribe();
-}, []);
+    return () => unsubscribe();
+  }, []);
 
-if (loadError) return <h1>Error loading maps</h1>;
-if (!isLoaded) return <h1>Loading Maps...</h1>;
+  if (loadError) return <h1>Error loading maps</h1>;
+  if (!isLoaded) return <h1>Loading Maps...</h1>;
 
-return (
-<div style={{ width: "100%", height: "100vh" }}>
-{currentUserLocation && (
-<GoogleMap
-mapContainerStyle={mapContainerStyle}
-zoom={18}
-center={currentUserLocation}
-options={options}
->
-{/* Render current user's own marker */}
-<Marker position={currentUserLocation} />
+  return (
+    <div style={{ width: "100%", height: "100vh" }}>
+      {currentUserLocation && (
+        <GoogleMap
+          mapContainerStyle={mapContainerStyle}
+          zoom={18}
+          center={currentUserLocation}
+          options={options}
+        >
+          {/* Render current user's own marker */}
+          <Marker position={currentUserLocation} />
 
-{/* Render nearby users with smooth animation */}
-{nearbyUsers.map((user) => (
-<UserMarker key={user.id} user={user} />
-))}
-</GoogleMap>
-)}
-</div>
-);
+          {/* Render nearby users with smooth animation */}
+          {nearbyUsers.map((user) => (
+            <UserMarker key={user.id} user={user} />
+          ))}
+        </GoogleMap>
+      )}
+    </div>
+  );
 }
