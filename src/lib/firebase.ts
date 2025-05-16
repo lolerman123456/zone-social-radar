@@ -4,6 +4,7 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAnalytics, isSupported } from "firebase/analytics";
+import { getDatabase } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAvtJ3Cd978FIOzACmCQ93qMMGCx31vpUo",
@@ -20,9 +21,10 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const firestore = getFirestore(app);
 const storage = getStorage(app);
+const database = getDatabase(app); // Add Realtime Database
 const googleProvider = new GoogleAuthProvider();
 
 // Initialize Analytics conditionally (might not be supported in all environments)
 const analyticsPromise = isSupported().then(yes => yes ? getAnalytics(app) : null);
 
-export { app, auth, firestore, storage, googleProvider, analyticsPromise };
+export { app, auth, firestore, storage, database, googleProvider, analyticsPromise };
