@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 import { onValue, ref } from "firebase/database";
 import { database } from "../lib/firebase";
+import { darkMapStyles } from "../lib/mapStyles";
 
 const libraries = ["places"];
 const mapContainerStyle = {
@@ -12,7 +13,7 @@ const mapContainerStyle = {
 const options = {
   disableDefaultUI: true,
   zoomControl: true,
-  styles: [], // Optional: you can add dark theme style here later
+  styles: darkMapStyles, // Apply dark map styles
 };
 
 interface User {
