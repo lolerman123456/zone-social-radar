@@ -27,10 +27,10 @@ const LocationPermissionModal: React.FC<LocationPermissionModalProps> = ({
             {permissionDenied ? (
               <>
                 <p className="mb-2">Location permission was denied.</p>
-                <p>Please enable location access in your browser settings to use Zoned. This app requires your location to connect you with people nearby.</p>
+                <p>Please enable location access in your browser settings to use VayeX. This app requires your location to connect you with people nearby.</p>
               </>
             ) : (
-              <p>Zoned needs access to your location to connect you with people nearby. Your location is only used while the app is open.</p>
+              <p>VayeX needs access to your location to connect you with people nearby. Your location is only used while the app is open.</p>
             )}
           </DialogDescription>
         </DialogHeader>

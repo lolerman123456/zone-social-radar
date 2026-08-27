@@ -2,25 +2,41 @@
 import React from 'react';
 
 interface LogoProps {
+  /** 'mark' is the square X glyph, 'wordmark' is the full VayeX lockup. */
+  variant?: 'mark' | 'wordmark';
   size?: 'sm' | 'md' | 'lg';
+  /** 'light' renders the artwork white for dark backgrounds, 'dark' keeps it black. */
+  tone?: 'light' | 'dark';
   className?: string;
 }
 
-const Logo: React.FC<LogoProps> = ({ size = 'md', className }) => {
-  const sizes = {
-    sm: 'w-8 h-8',
-    md: 'w-12 h-12',
-    lg: 'w-16 h-16'
-  };
+const markSizes = {
+  sm: 'h-8',
+  md: 'h-12',
+  lg: 'h-16'
+};
+
+const wordmarkSizes = {
+  sm: 'h-6',
+  md: 'h-9',
+  lg: 'h-12'
+};
+
+const Logo: React.FC<LogoProps> = ({
+  variant = 'mark',
+  size = 'md',
+  tone = 'light',
+  className
+}) => {
+  const isWordmark = variant === 'wordmark';
+  const height = isWordmark ? wordmarkSizes[size] : markSizes[size];
 
   return (
-    <div className={`relative ${sizes[size]} ${className || ''}`}>
-      <img 
-        src="/lovable-uploads/2b396bbb-453b-4126-9400-8479ac043b32.png" 
-        alt="Zoned Logo" 
-        className="w-full h-full object-contain"
-      />
-    </div>
+    <img
+      src={isWordmark ? '/brand/vayex-logo.png' : '/brand/vayex-mark.png'}
+      alt="VayeX"
+      className={`${height} w-auto object-contain ${tone === 'light' ? 'invert' : ''} ${className || ''}`}
+    />
   );
 };
 
