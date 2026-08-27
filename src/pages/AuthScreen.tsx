@@ -90,8 +90,7 @@ const AuthScreen: React.FC = () => {
     <div className="min-h-screen flex flex-col justify-center items-center p-4 bg-black">
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center justify-center space-y-2">
-          <Logo size="lg" />
-          <h1 className="text-4xl font-bold text-white mt-4">Zoned</h1>
+          <Logo variant="wordmark" size="lg" className="mb-2" />
           <p className="text-lg text-gray-400">Your proximity-based social radar</p>
         </div>
 
