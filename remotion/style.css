@@ -1,0 +1,5 @@
+/* Tailwind entry used only by Remotion compositions.
+   Pulled in via remotion/Root.tsx and processed by @remotion/tailwind. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
