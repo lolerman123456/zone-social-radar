@@ -37,6 +37,18 @@ jobs:
         working-directory: gods-eye-view
         run: npm run build -- --base=/${{ github.event.repository.name }}/
 
+      - name: Flatten assets copied under the base subpath
+        working-directory: gods-eye-view/dist
+        # The Cesium plugin copies its runtime assets into a folder named after
+        # the base path (e.g. dist/<repo>/cesium/...). Move them up to dist root
+        # so /<repo>/cesium/... resolves correctly on GitHub Pages.
+        run: |
+          repo="${GITHUB_REPOSITORY##*/}"
+          if [ -d "$repo" ]; then
+            cp -a "$repo"/. ./
+            rm -rf "$repo"
+          fi
+
       - name: Publish to gh-pages branch
         working-directory: gods-eye-view/dist
         run: |
