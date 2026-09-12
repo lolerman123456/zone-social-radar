@@ -1,0 +1,62 @@
+name: Deploy gods-eye-view to Pages
+
+on:
+  push:
+    branches:
+      - claude/gods-eye-view-setup-g7iojf
+    paths:
+      - 'gods-eye-view/**'
+      - '.github/workflows/deploy-gods-eye-view.yml'
+  workflow_dispatch:
+
+# Allow the workflow to enable Pages and publish to it.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one concurrent deploy; don't cancel an in-progress one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        working-directory: gods-eye-view
+        run: npm ci
+
+      - name: Build (static, keyless) with Pages base path
+        working-directory: gods-eye-view
+        run: npm run build -- --base=/${{ github.event.repository.name }}/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: gods-eye-view/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
