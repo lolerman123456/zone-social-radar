@@ -1,0 +1,62 @@
+name: Deploy gods-eye-view to Pages
+
+on:
+  push:
+    branches:
+      - claude/gods-eye-view-setup-g7iojf
+    paths:
+      - 'gods-eye-view/**'
+      - '.github/workflows/deploy-gods-eye-view.yml'
+  workflow_dispatch:
+
+# Push the built site to the gh-pages branch.
+permissions:
+  contents: write
+
+concurrency:
+  group: gods-eye-view-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        working-directory: gods-eye-view
+        run: npm ci
+
+      - name: Build (static, keyless) with Pages base path
+        working-directory: gods-eye-view
+        run: npm run build -- --base=/${{ github.event.repository.name }}/
+
+      - name: Flatten assets copied under the base subpath
+        working-directory: gods-eye-view/dist
+        # The Cesium plugin copies its runtime assets into a folder named after
+        # the base path (e.g. dist/<repo>/cesium/...). Move them up to dist root
+        # so /<repo>/cesium/... resolves correctly on GitHub Pages.
+        run: |
+          repo="${GITHUB_REPOSITORY##*/}"
+          if [ -d "$repo" ]; then
+            cp -a "$repo"/. ./
+            rm -rf "$repo"
+          fi
+
+      - name: Publish to gh-pages branch
+        working-directory: gods-eye-view/dist
+        run: |
+          touch .nojekyll
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Deploy gods-eye-view from ${GITHUB_SHA}"
+          git branch -M gh-pages
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages
